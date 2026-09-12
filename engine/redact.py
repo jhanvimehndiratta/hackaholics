@@ -1,8 +1,8 @@
 from .detectors import analyze_text
 
 
-def redact_text(text, finding_ids):
-    analysis = analyze_text(text)
+def redact_text(text, finding_ids, policy="balanced"):
+    analysis = analyze_text(text, policy=policy)
     findings_by_id = {finding["id"]: finding for finding in analysis["findings"]}
     unknown = set(finding_ids) - set(findings_by_id)
     if unknown:

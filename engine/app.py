@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -22,16 +22,19 @@ audit_store = AuditStore()
 
 class AnalyzeRequest(BaseModel):
     text: str = Field(min_length=1, max_length=100_000)
+    policy: Literal["balanced", "strict"] = "balanced"
 
 
 class RedactRequest(AnalyzeRequest):
     findingIds: list[str] = Field(default_factory=list, max_length=100)
+    policy: Literal["balanced", "strict"] = "balanced"
 
 
 class DecisionRequest(BaseModel):
-    decision: Literal["block", "redact_send", "allow_once", "allow"]
+    decision: Literal["block", "redact_send", "allow_once", "allow", "redact_paste", "paste_once"]
     findingTypes: list[str] = Field(default_factory=list, max_length=100)
     sent: bool
+    policy: Literal["balanced", "strict"] = "balanced"
 
 
 @app.middleware("http")
@@ -50,13 +53,16 @@ def health():
 
 @app.post("/analyze")
 def analyze(request: AnalyzeRequest):
-    return analyze_text(request.text)
+    try:
+        return analyze_text(request.text, policy=request.policy)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @app.post("/redact")
 def redact(request: RedactRequest):
     try:
-        return redact_text(request.text, request.findingIds)
+        return redact_text(request.text, request.findingIds, policy=request.policy)
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
 
@@ -64,9 +70,18 @@ def redact(request: RedactRequest):
 @app.post("/audit")
 def record_audit(request: DecisionRequest):
     findings = [{"type": finding_type} for finding_type in request.findingTypes]
-    return audit_store.record(request.decision, findings, request.sent)
+    return audit_store.record(request.decision, findings, request.sent, policy=request.policy)
 
 
 @app.get("/audit")
 def list_audit():
     return {"events": audit_store.list()}
+
+
+@app.get("/audit/export")
+def export_audit(format: Literal["json", "markdown"] = Query(default="json")):
+    result = audit_store.export(export_format=format)
+    if format == "markdown":
+        return Response(content=result, media_type="text/markdown")
+    return result
+

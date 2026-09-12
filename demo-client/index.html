@@ -4,20 +4,34 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <title>Sentinel AI Workspace</title>
+    <title>Sentinel — Privacy Firewall for AI Prompts</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="app-shell" aria-labelledby="workspace-title">
       <header class="topbar">
-        <a class="brand" href="#workspace" aria-label="Sentinel workspace home">
-          <span class="brand-mark" aria-hidden="true"><span></span></span>
-          <span><strong>Sentinel</strong><small>AI Workspace</small></span>
-        </a>
-        <div class="engine-state" data-engine-state="checking">
-          <span class="engine-dot" aria-hidden="true"></span>
-          <span id="engine-label">Checking local engine</span>
-          <code>127.0.0.1:8787</code>
+        <div class="topbar-left">
+          <a class="brand" href="#workspace" aria-label="Sentinel workspace home">
+            <span class="brand-mark" aria-hidden="true"><span></span></span>
+            <strong>Sentinel</strong>
+          </a>
+          <span class="version-chip">Review 2</span>
+        </div>
+
+        <div class="topbar-center">
+          <div class="policy-toggle-group" role="radiogroup" aria-label="Policy enforcement mode">
+            <span class="policy-label">Policy:</span>
+            <button type="button" class="policy-toggle-btn is-active" id="policy-balanced-btn" data-policy="balanced" role="radio" aria-checked="true" title="Balanced mode: Standard credentials, passwords, IPs, emails">Balanced</button>
+            <button type="button" class="policy-toggle-btn" id="policy-strict-btn" data-policy="strict" role="radio" aria-checked="false" title="Strict mode: Balanced + Shannon Entropy (H ≥ 3.5) for suspected tokens">Strict (Entropy ≥ 3.5)</button>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="engine-state" data-engine-state="checking" id="engine-status-badge">
+            <span class="engine-dot" aria-hidden="true"></span>
+            <span id="engine-label">Checking engine</span>
+            <code>127.0.0.1:8787</code>
+          </div>
         </div>
       </header>
 
@@ -28,63 +42,88 @@
               <p class="context-label">Controlled demonstration client</p>
               <h1 id="workspace-title">Prompt workspace</h1>
             </div>
-            <span class="simulation-chip">Simulation only</span>
+            <div class="header-tags">
+              <span class="simulation-chip">Simulation only</span>
+            </div>
           </div>
 
           <div class="message-stream" id="message-stream" aria-live="polite">
             <article class="system-note">
               <span class="system-icon" aria-hidden="true">S</span>
               <div>
-                <strong>Local protection is active</strong>
-                <p>Prompts pause at the Sentinel checkpoint before this workspace simulates a send.</p>
+                <strong>Local protection active</strong>
+                <p>Prompts and clipboard pastes are inspected on this device before leaving the workspace.</p>
               </div>
             </article>
             <div class="empty-conversation" id="empty-conversation">
               <div class="boundary-glyph" aria-hidden="true"><span></span></div>
-              <p>No prompts have crossed the boundary.</p>
-              <small>Choose a sample below to test the local interception flow.</small>
+              <p>No prompts sent yet</p>
+              <small>Select a sample or paste content below to test local interception, redaction, and policy evaluation.</small>
             </div>
           </div>
 
-          <form class="composer" id="prompt-form">
-            <div class="sample-tabs" role="group" aria-label="Demo prompt samples">
-              <button type="button" class="sample-button" data-sample="safe">Safe</button>
-              <button type="button" class="sample-button is-active" data-sample="sensitive">Sensitive</button>
-              <button type="button" class="sample-button" data-sample="ambiguous">Ambiguous</button>
-            </div>
-            <label for="prompt-input">Prompt</label>
-            <div class="compose-box" id="compose-box">
-              <textarea id="prompt-input" rows="6" spellcheck="false"></textarea>
-              <div class="compose-footer">
-                <span class="local-note"><span aria-hidden="true">⌁</span> Checked on this device</span>
-                <button type="submit" class="send-button" id="send-button">
-                  <span>Send</span>
-                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 11-6-3 12-2.6-4L4 10Z" /></svg>
-                </button>
+          <div class="interactive-areas">
+            <!-- Paste Firewall Live Playground -->
+            <div class="paste-sandbox-panel">
+              <div class="sandbox-header">
+                <span class="sandbox-title">📋 Paste Firewall Playground</span>
+                <span class="sandbox-tip">Paste clipboard data here (Ctrl+V / Cmd+V) to test instant extension interception</span>
               </div>
-              <div class="scan-line" id="scan-line" aria-hidden="true"></div>
+              <input
+                type="text"
+                class="paste-test-input"
+                id="paste-test-input"
+                placeholder="Paste API keys, DB strings, or secrets here to trigger Paste Firewall overlay..."
+                autocomplete="off"
+                spellcheck="false"
+              />
             </div>
-            <p class="form-status" id="form-status" role="status"></p>
-          </form>
+
+            <form class="composer" id="prompt-form">
+              <div class="sample-tabs" role="group" aria-label="Demo prompt samples">
+                <button type="button" class="sample-button" data-sample="safe">Safe Prompt</button>
+                <button type="button" class="sample-button is-active" data-sample="sensitive">Multi-Finding Sensitive</button>
+                <button type="button" class="sample-button" data-sample="entropy">Strict Entropy Candidate</button>
+                <button type="button" class="sample-button" data-sample="ambiguous">Benign UUID</button>
+              </div>
+              <div class="composer-header-row">
+                <label for="prompt-input">Prompt</label>
+                <span class="active-policy-indicator" id="active-policy-indicator">Policy: Balanced</span>
+              </div>
+              <div class="compose-box" id="compose-box">
+                <textarea id="prompt-input" rows="5" spellcheck="false"></textarea>
+                <div class="compose-footer">
+                  <span class="local-note"><span aria-hidden="true">⌁</span> Inspected locally (Zero Cloud Telemetry)</span>
+                  <button type="submit" class="send-button" id="send-button">
+                    <span>Send</span>
+                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 11-6-3 12-2.6-4L4 10Z" /></svg>
+                  </button>
+                </div>
+                <div class="scan-line" id="scan-line" aria-hidden="true"></div>
+              </div>
+              <p class="form-status" id="form-status" role="status"></p>
+            </form>
+          </div>
         </div>
 
         <aside class="checkpoint-panel" aria-labelledby="checkpoint-title">
           <div class="checkpoint-header">
             <span class="checkpoint-symbol" aria-hidden="true"><i></i></span>
             <div>
-              <p class="context-label">Local trust checkpoint</p>
+              <p class="context-label">Local checkpoint</p>
               <h2 id="checkpoint-title">Ready to inspect</h2>
             </div>
           </div>
 
           <section class="checkpoint-state checkpoint-idle" id="checkpoint-idle">
-            <div class="idle-orbit" aria-hidden="true"><span></span><i></i></div>
-            <h3>Nothing is leaving yet</h3>
-            <p>Sentinel will inspect the next prompt locally and pause it here if sensitive values are found.</p>
+            <div class="idle-orbit" aria-hidden="true"><span></span></div>
+            <h3>Standing by</h3>
+            <p>Prompts and pastes are analyzed locally. If sensitive values are detected, execution pauses here for review.</p>
             <dl class="privacy-facts">
-              <div><dt>Detection</dt><dd>Pattern + entropy</dd></div>
-              <div><dt>Processing</dt><dd>Local only</dd></div>
-              <div><dt>Persistent bypass</dt><dd>Never</dd></div>
+              <div><dt>Engine</dt><dd>Deterministic rules</dd></div>
+              <div><dt>Shannon Entropy</dt><dd id="fact-entropy">Disabled in Balanced</dd></div>
+              <div><dt>Network</dt><dd>Localhost only</dd></div>
+              <div><dt>Audit</dt><dd>Sanitized (No raw values)</dd></div>
             </dl>
           </section>
 
@@ -92,9 +131,15 @@
             <div class="review-summary">
               <span id="finding-count">0 findings</span>
               <strong>Review before sending</strong>
-              <p>The original prompt is paused locally. Select what to redact, then choose an action.</p>
+              <p>Sensitive values detected under <b id="review-policy-name">balanced</b> policy. Select items to redact or block.</p>
             </div>
             <div class="finding-list" id="finding-list"></div>
+
+            <div class="live-preview-box">
+              <span class="preview-title">In-Place Redaction Preview:</span>
+              <pre class="preview-text" id="live-preview-text"></pre>
+            </div>
+
             <div class="decision-stack">
               <button type="button" class="decision-button redact-button" id="redact-button">Redact &amp; Send</button>
               <button type="button" class="decision-button block-button" id="block-button">Block</button>
@@ -111,12 +156,16 @@
 
           <section class="activity-section" aria-labelledby="activity-title">
             <div class="activity-heading">
-              <h3 id="activity-title">Local activity</h3>
+              <h3 id="activity-title">Session activity</h3>
               <span>Sanitized</span>
             </div>
             <ol class="activity-list" id="activity-list">
               <li class="activity-empty">No decisions recorded this session.</li>
             </ol>
+            <div class="export-actions">
+              <button type="button" class="export-btn" id="export-json-btn" title="Download sanitized JSON audit log">Export JSON</button>
+              <button type="button" class="export-btn" id="export-md-btn" title="Download sanitized Markdown audit log">Export Markdown</button>
+            </div>
           </section>
         </aside>
       </section>
@@ -125,3 +174,4 @@
     <script src="app.js"></script>
   </body>
 </html>
+

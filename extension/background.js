@@ -6,6 +6,7 @@ const routes = {
   redact: { path: "/redact", method: "POST" },
   audit: { path: "/audit", method: "POST" },
   getAudit: { path: "/audit", method: "GET" },
+  exportAudit: { path: "/audit/export", method: "GET" },
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
