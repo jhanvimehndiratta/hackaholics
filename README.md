@@ -1,101 +1,175 @@
-# Sentinel — Local Prompt & Clipboard Privacy Firewall
+# Sentinel
 
-[![Sentinel CI](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/ci.yml/badge.svg)](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/ci.yml)
-[![Pages](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/pages.yml/badge.svg)](https://jhanvimehndiratta.github.io/hackaholics/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+**An on-device privacy firewall for prompts and clipboard pastes.**
 
-Sentinel detects and redacts sensitive values before an AI prompt or clipboard paste leaves your control. Detection is deterministic and runs on-device; clipboard text is never sent to a cloud service.
+Sentinel catches sensitive values before they reach an AI chat, form, or other
+website. It analyzes text locally, shows only masked evidence, and lets the
+user block, redact, or explicitly approve the paste.
 
-## Try the standalone web app
+[Launch the standalone demo](https://jhanvimehndiratta.github.io/hackaholics/)
 
-Open **https://jhanvimehndiratta.github.io/hackaholics/**. The GitHub Pages app analyzes arbitrary text locally using the browser engine. It requires no FastAPI server and no extension.
+> All examples included with Sentinel are synthetic. Never use real secrets in
+> a presentation or test.
 
-The page is a controlled prompt simulation. Visiting it **does not install or activate the Chrome extension** and therefore cannot intercept paste events on other websites.
+## The problem
 
-## Browser extension
+Prompts often begin as copied logs, configuration files, support messages, or
+environment snippets. Those sources can quietly contain credentials, private
+network details, or personal information. A warning after submission is too
+late.
 
-The extension uses the same browser engine as the Pages app and intercepts paste before insertion on supported fields:
+Sentinel adds a decision point **before insertion**:
 
-- `textarea`
-- `input` types `text`, `search`, `url`, and `email`
-- `contenteditable` regions
+```mermaid
+flowchart LR
+    A[Paste] --> B[Hold text outside the page]
+    B --> C[Analyze on device]
+    C -->|No findings| D[Insert normally]
+    C -->|Findings| E[Show masked review]
+    E --> F[Block]
+    E --> G[Redact and paste]
+    E --> H[Allow once]
+```
 
-It does not inspect password inputs. Chrome does not inject content scripts into protected pages such as `chrome://`, browser settings, or extension pages.
+## Two ways to experience Sentinel
 
-### Why it requests access to all sites
+### Standalone web demo
 
-The manifest uses `<all_urls>` so Sentinel can protect supported editable fields on ordinary websites, including AI chat sites. This is a broad permission: Chrome may describe it as permission to read and change data on websites you visit. Sentinel uses that access only to observe paste events in the supported fields above, analyze clipboard text locally, and display a local review dialog. It has no cloud endpoint, telemetry, or host permission.
+The GitHub Pages demo is the fastest way to present the detection and review
+flow. It runs the browser engine directly on the page—no account, backend, or
+extension is required.
 
-Paste handling is fail-closed: Sentinel cancels the browser paste synchronously. Safe text is inserted only after analysis succeeds. Sensitive text remains outside the target DOM until you explicitly choose **Allow once**; **Redact and paste** inserts only the redacted result. If analysis fails, nothing is inserted.
+- Choose **Sensitive input**, then select **Inspect locally**.
+- Review the finding type, severity, and masked evidence.
+- Select which findings to remove.
+- Choose **Redact & paste** to copy the sanitized result.
+- Choose **Allow once** to copy the original only after explicit approval.
+- If browser clipboard access is unavailable, use the visible manual copy
+  control.
 
-### Install from source
+The page is a controlled simulation. It cannot intercept pastes on other
+websites and does not install the browser extension.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/jhanvimehndiratta/hackaholics.git
-   cd hackaholics
-   ```
-2. Open `chrome://extensions` in Chrome or Chromium.
-3. Enable **Developer mode**.
-4. Choose **Load unpacked** and select the `extension/` directory.
+### Browser extension
 
-A future Chrome Web Store listing can provide normal installation; GitHub Pages cannot install an extension automatically.
+The unpacked extension protects supported editors on normal HTTP and HTTPS
+pages. It cancels each supported paste synchronously, analyzes the captured
+text locally, and inserts nothing sensitive before a decision is made.
+
+| Decision | Destination result |
+| --- | --- |
+| **Block** | The destination remains unchanged. |
+| **Redact and paste** | Only the sanitized text is inserted. |
+| **Allow once** | The original text is inserted after explicit approval. |
+
+The extension preserves the original selection or caret when approved text is
+inserted, including in framework-controlled fields and `contenteditable`
+editors.
+
+## A presentation flow
+
+A short demonstration can show the complete value proposition:
+
+1. Open the standalone demo and run **Sensitive input**.
+2. Point out that every finding displays masked—not raw—evidence.
+3. Choose **Redact & paste** and show the sanitized clipboard result.
+4. Run **Strict entropy** to demonstrate Strict policy detection.
+5. Switch that same example to **Balanced** to show the policy difference.
+6. Run **Benign UUID** to show a zero-finding false-positive check.
+7. In a separate browser tab with the extension loaded, paste a synthetic
+   sensitive sample and demonstrate **Block**, **Redact and paste**, and
+   **Allow once**.
 
 ## Detection policies
 
-- **Balanced:** database URLs containing credentials, AWS and GitHub tokens, named API keys/passwords, email addresses, and RFC1918 private IPv4 addresses.
-- **Strict:** Balanced rules plus high-entropy values in named secret contexts (Shannon entropy `>= 3.5`).
+| Policy | Designed for | Detection behavior |
+| --- | --- | --- |
+| **Balanced** | Everyday protection with fewer false positives | Detects credential-bearing database URLs, AWS and GitHub tokens, named API keys and passwords, email addresses, and private IPv4 addresses. |
+| **Strict** | Higher-sensitivity review | Includes every Balanced rule and flags high-entropy values when they appear in a named secret context. |
 
-Findings include deterministic IDs, exact character ranges, severity, a safe preview, and a replacement. Redaction reanalyzes the original text and applies validated replacements from right to left. Audit records contain decisions and finding categories, never raw prompt or clipboard values.
+Strict entropy detection is contextual rather than a blanket rule. The
+**Benign UUID** sample demonstrates that an ordinary identifier can pass with
+zero findings under Balanced policy.
 
-## Optional Python reference mode
+## Privacy guarantees
 
-The FastAPI implementation remains the higher-assurance reference and fixture authority. It is not required by the Pages app or extension.
+- **On-device analysis:** detection and redaction run in the browser.
+- **No analysis uploads:** prompt and clipboard text are not sent to a remote
+  analysis service.
+- **Masked evidence:** review screens render each finding's safe preview, never
+  the raw matched value.
+- **Pre-insertion protection:** sensitive text stays outside the destination
+  DOM until the user explicitly allows it.
+- **Fail-closed behavior:** if policy lookup, analysis, or approved insertion
+  fails, the original paste remains blocked.
+- **Local site policy:** protected mode is the default; paused-site exceptions
+  are stored locally and can be reviewed or reset from the extension popup.
+- **Minimal audit content:** decisions and finding categories can be recorded
+  without storing raw prompt or clipboard values.
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python3 -m uvicorn engine.app:app --host 127.0.0.1 --port 8787
-```
+## Supported browser fields
 
-Run the local static client separately if desired:
+Sentinel protects:
 
-```bash
-python3 -m http.server 4173 --bind 127.0.0.1 --directory demo-client
-```
+- `textarea` elements
+- `input` elements with `text`, `search`, `url`, or `email` types
+- `contenteditable` regions, including nested editing targets
 
-## Tests
+Password fields are intentionally excluded. Browsers also prevent extensions
+from running on protected pages such as internal settings and extension
+management screens.
 
-```bash
-PYTHONPATH=. python3 -m unittest discover -s engine/tests -v
-node --test tests/browser-engine.test.js tests/paste-firewall.test.js
-cmp shared/sentinel-engine.js extension/shared/sentinel-engine.js
-```
+### Why broad page access is requested
 
-The Python generator owns `tests/fixtures/browser-engine-parity.json`. CI regenerates it and detects drift, compares complete analyses/redactions/audit exports, tests fail-closed paste behavior and caret restoration, verifies bundle identity, and validates manifest script order.
+The extension runs on ordinary websites so it can stop a supported paste
+before the destination receives it. That access is used to listen for paste
+events, perform local analysis, insert an approved result, and display the
+review interface. Sentinel has no remote analysis endpoint or telemetry.
 
-## Repository layout
+Protection can be paused for a specific origin from the extension popup. A
+paused origin remains visible in the local paused-sites list and can be
+resumed at any time.
 
-```text
-engine/                       Python reference detector, redactor, audit, API
-shared/sentinel-engine.js     Browser-safe classic-script engine
-extension/shared/             Byte-identical packaged browser engine
-extension/paste-controller.js Testable fail-closed paste controller
-extension/content.js          All-sites interception and local review UI
-demo-client/                  Standalone GitHub Pages app
-tests/                        Browser parity and paste-firewall tests
-```
+## Install the extension from source
 
-## GitHub automation
+Sentinel is distributed as an unpacked Chromium extension for the
+presentation build.
 
-- `.github/workflows/ci.yml` tests Python 3.9–3.12 and the browser/extension implementation.
-- `.github/workflows/pages.yml` publishes `demo-client/` plus the shared engine.
-- In **Settings → Pages**, choose **GitHub Actions** as the source.
-- `.devcontainer/devcontainer.json` provides Codespaces support for ports `8787` and `4173`.
+1. Download or clone this repository.
+2. Open `chrome://extensions` in Chrome or `brave://extensions` in Brave.
+3. Enable **Developer mode**.
+4. Select **Load unpacked** and choose the repository's `extension` folder.
+5. Reload any website tabs that were already open.
 
-All included credentials and test values are synthetic.
+GitHub Pages demonstrates the product but cannot install or activate the
+extension.
+
+## Architecture
+
+Sentinel uses one deterministic detection model across its interfaces:
+
+- A shared browser engine performs local analysis and redaction.
+- The standalone demo presents the policy and decision workflow.
+- The extension adds synchronous paste interception and site-level controls.
+- A Python reference implementation generates parity fixtures for independent
+  verification of browser behavior.
+
+No backend is required for the standalone demo or extension.
+
+## Validation
+
+Automated tests cover browser and reference-engine parity, masked evidence,
+deterministic redaction, policy differences, clipboard fallbacks, synchronous
+paste interception, fail-closed behavior, selection restoration,
+framework-controlled fields, nested `contenteditable` targets, site policy,
+and extension packaging.
+
+## Scope
+
+Sentinel is a focused, deterministic safety layer. It complements—not
+replaces—enterprise data-loss prevention, secret rotation, access controls,
+and incident response.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Released under the [MIT License](LICENSE).
