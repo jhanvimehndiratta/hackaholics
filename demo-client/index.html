@@ -37,7 +37,7 @@
             </div>
           </div>
 
-          <div class="editor-card">
+          <form class="editor-card" id="prompt-form">
             <label class="editor-label" for="prompt-input">Your text</label>
             <textarea id="prompt-input" rows="7" spellcheck="false" placeholder="Paste or type sensitive values you want to inspect..."></textarea>
 
@@ -47,108 +47,14 @@
                 <div class="meta-row"><span class="meta-k">Network</span><span class="meta-v">No analysis requests</span></div>
               </div>
 
-              <button type="button" class="primary-btn" id="send-button">
+              <button type="submit" class="primary-btn" id="send-button">
                 <span>Inspect locally</span>
               </button>
             </div>
 
             <p class="form-status" id="form-status" role="status"></p>
-
             <div class="scan-line" id="scan-line" aria-hidden="true"></div>
-          </div>
-
-          <details class="synthetic" open="false">
-            <summary>Try synthetic test data</summary>
-            <div class="synthetic-grid">
-              <button type="button" class="sample-button" data-sample="safe">Safe Prompt</button>
-              <button type="button" class="sample-button" data-sample="sensitive">Sensitive input</button>
-              <button type="button" class="sample-button" data-sample="entropy">Strict entropy</button>
-              <button type="button" class="sample-button" data-sample="ambiguous">Benign UUID</button>
-            </div>
-          </details>
-        </section>
-
-        <aside class="decision-panel" aria-label="Inspection decisions">
-          <div class="decision-top">
-            <h2 class="decision-title">Status</h2>
-          </div>
-
-          <div class="state-card" id="state-idle">
-            <div class="state-head">
-              <span class="state-icon" aria-hidden="true">⎔</span>
-              <span class="state-label" id="checkpoint-title">Ready to inspect</span>
-            </div>
-            <p class="state-copy">Paste text and click <b>Inspect locally</b>.</p>
-          </div>
-
-          <div class="state-card" id="state-analyzing" hidden>
-            <div class="state-head">
-              <span class="state-icon" aria-hidden="true">…</span>
-              <span class="state-label">Analysing</span>
-            </div>
-            <p class="state-copy">Local analysis is running.</p>
-          </div>
-
-          <div class="state-card" id="state-review" hidden>
-            <div class="state-head">
-              <span class="state-icon" aria-hidden="true">✦</span>
-              <span class="state-label">Review required</span>
-            </div>
-            <p class="state-copy">Select masked evidence and choose an action.</p>
-
-            <div class="finding-table-wrap">
-              <div class="finding-table-head">
-                <span class="th">Rule</span>
-                <span class="th">Masked evidence</span>
-                <span class="th">Severity</span>
-              </div>
-              <div id="finding-list" class="finding-table" role="table" aria-label="Masked findings"></div>
-            </div>
-
-            <div class="decision-actions">
-              <button type="button" class="decision-btn" id="redact-button">Redact &amp; paste</button>
-              <button type="button" class="decision-btn deny" id="block-button">Blocked before insertion</button>
-              <button type="button" class="decision-btn allow" id="allow-button">Allow once</button>
-            </div>
-          </div>
-
-          <div class="state-card" id="state-outcome" hidden>
-            <div class="state-head">
-              <span class="state-icon" id="outcome-icon" aria-hidden="true">✓</span>
-              <span class="state-label" id="outcome-title"></span>
-            </div>
-            <p class="state-copy" id="outcome-copy"></p>
-            <button type="button" class="secondary-btn" id="reset-button">Inspect another input</button>
-          </div>
-
-          <div class="state-card" id="state-offline" hidden>
-            <div class="state-head">
-              <span class="state-icon" aria-hidden="true">!</span>
-              <span class="state-label">Engine unavailable</span>
-            </div>
-            <p class="state-copy">Local analysis is unavailable. Supported pastes remain blocked.</p>
-          </div>
-        </aside>
-      </section>
-          <div class="editor-card">
-            <label class="editor-label" for="prompt-input">Your text</label>
-            <textarea id="prompt-input" rows="7" spellcheck="false" placeholder="Paste or type sensitive values you want to inspect..."></textarea>
-
-            <div class="editor-footer">
-              <div class="local-meta" aria-label="Technical metadata">
-                <div class="meta-row"><span class="meta-k">Engine</span><span class="meta-v">Deterministic rules</span></div>
-                <div class="meta-row"><span class="meta-k">Network</span><span class="meta-v">No analysis requests</span></div>
-              </div>
-
-              <button type="button" class="primary-btn" id="send-button">
-                <span>Inspect locally</span>
-              </button>
-            </div>
-
-            <p class="form-status" id="form-status" role="status"></p>
-
-            <div class="scan-line" id="scan-line" aria-hidden="true"></div>
-          </div>
+          </form>
 
           <details class="synthetic" open="false">
             <summary>Try synthetic test data</summary>

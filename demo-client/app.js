@@ -20,6 +20,7 @@ const findingCopy = {
 };
 
 const form = document.querySelector("#prompt-form");
+// Some legacy markup versions may not include all optional elements.
 const input = document.querySelector("#prompt-input");
 const sendButton = document.querySelector("#send-button");
 const composeBox = document.querySelector("#compose-box");
@@ -31,6 +32,14 @@ const promptPanel = document.querySelector("#prompt-panel");
 const statusLine = document.querySelector("#status-line");
 const privacyToggle = document.querySelector("#privacy-toggle");
 const privacyNote = document.querySelector("#privacy-note");
+// Optional elements: guard bindings below so missing markup can't crash startup.
+const reviewPolicyName = document.querySelector("#review-policy-name");
+const findingCount = document.querySelector("#finding-count");
+const livePreviewText = document.querySelector("#live-preview-text");
+
+// (Older markup references these IDs; the new UI may omit them.)
+// Keep them optional and never assume existence.
+const _unused_guards = { reviewPolicyName, findingCount, livePreviewText };
 
 const checkpointTitle = document.querySelector("#checkpoint-title");
 const idleState = document.querySelector("#state-idle");
@@ -40,10 +49,6 @@ const outcomeState = document.querySelector("#state-outcome");
 const offlineState = document.querySelector("#state-offline");
 
 const findingList = document.querySelector("#finding-list");
-
-const reviewPolicyName = document.querySelector("#review-policy-name");
-const findingCount = document.querySelector("#finding-count");
-const livePreviewText = document.querySelector("#live-preview-text");
 
 const outcomeTitle = document.querySelector("#outcome-title");
 const outcomeCopy = document.querySelector("#outcome-copy");
@@ -57,6 +62,8 @@ const exportMdBtn = document.querySelector("#export-md-btn");
 const policyBalancedBtn = document.querySelector("#policy-balanced-btn");
 const policyStrictBtn = document.querySelector("#policy-strict-btn");
 const activePolicyIndicator = document.querySelector("#active-policy-indicator");
+
+// NOTE: optional elements are guarded above so missing markup can't crash startup.
 
 const policyButtons = [policyBalancedBtn, policyStrictBtn].filter(Boolean);
 
@@ -292,8 +299,14 @@ function initPrivacyToggle() {
   });
 }
 
-form.addEventListener("submit", (event) => {
+form?.addEventListener("submit", (event) => {
   event.preventDefault();
+  submitPrompt();
+});
+// If markup accidentally omits #prompt-form, fall back to clicking the primary button.
+sendButton?.addEventListener("click", (e) => {
+  if (form) return;
+  e.preventDefault();
   submitPrompt();
 });
 

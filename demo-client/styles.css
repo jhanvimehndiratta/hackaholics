@@ -26,38 +26,63 @@ body{
 /* Background layers: periwinkle beam + faint matrix glyphs + low-opacity vignette */
 body::before{
   content:"";
-  position:absolute;
+  position:fixed;
   inset:0;
   pointer-events:none;
+  z-index:0;
+  transform: translateZ(0);
 
-  /* near-black slate + subtle vertical beam behind hero */
-  background:
-    radial-gradient(520px 700px at 58% 12%, rgba(142,162,255,.22), rgba(9,13,22,0) 62%),
-    linear-gradient(180deg, rgba(142,162,255,.10), rgba(9,13,22,0) 55%),
-    linear-gradient(90deg, rgba(42,52,72,.05) 1px, rgba(9,13,22,0) 1px),
-    linear-gradient(rgba(42,52,72,.05) 1px, rgba(9,13,22,0) 1px);
+  /* Cinematic backdrop: navy-black canvas + centered vertical beam */
 
-  background-size: auto, auto, 64px 64px, 64px 64px;
-  opacity:.55;
+
+  /* Full-viewport cinematic radar image backdrop */
+  background-image:
+    /* dark navy overlay / vignette above the image */
+    radial-gradient(1200px 900px at 50% 15%, rgba(9,13,22,0) 40%, rgba(9,13,22,.82) 82%),
+    radial-gradient(900px 420px at 50% 92%, rgba(59,130,246,.16), rgba(9,13,22,0) 60%),
+    url("./radar-backdrop.png");
+
+  background-repeat: no-repeat;
+  background-size: cover, cover, cover;
+
+  /* Slightly above hero center */
+  background-position:
+    center top,
+    center,
+    50% 40%;
+
+  /* Opacity so panels remain readable */
+  opacity: .45;
 }
 
 body::after{
   content:"";
-  position:absolute;
+  position:fixed;
   inset:0;
   pointer-events:none;
+  z-index:0;
+  transform: translateZ(0);
 
-  /* faint “matrix” texture via repeating conic + grainy dots (CSS-only) */
+  /* Additional glyph shimmer (static), kept extremely subtle */
   background:
-    repeating-linear-gradient(90deg, rgba(142,162,255,.06) 0 1px, rgba(9,13,22,0) 1px 8px),
-    repeating-linear-gradient(180deg, rgba(142,162,255,.03) 0 1px, rgba(9,13,22,0) 1px 10px),
-    radial-gradient(900px 520px at 50% 0%, rgba(9,13,22,0) 10%, rgba(9,13,22,.75) 70%);
+    repeating-linear-gradient(90deg, rgba(142,162,255,.03) 0 1px, rgba(9,13,22,0) 1px 12px),
+    repeating-linear-gradient(180deg, rgba(142,162,255,.02) 0 1px, rgba(9,13,22,0) 1px 14px),
+    radial-gradient(1000px 520px at 50% 0%, rgba(142,162,255,.08), rgba(9,13,22,0) 65%);
 
-  opacity:.35;
+  opacity:.25;
+}
+
+@media (prefers-reduced-motion: reduce){
+  body::before, body::after{filter:none;}
 }
 
 /* Keep panels readable */
 main{position: relative; z-index: 1;}
+/* Backdrop fixed layers live at z-index:0; keep panels above for readability. */
+.inspection-panel,
+.decision-panel,
+.editor-card,
+.state-card{position:relative; z-index:1;}
 
 /* reduced motion: no animations anyway, but keep the rule for safety */
 @media (prefers-reduced-motion: reduce){
@@ -84,6 +109,26 @@ main, header, section, aside { position: relative; z-index: 1; }
 button,textarea,input{font:inherit}
 button{color:inherit}
 button:focus-visible,textarea:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* Unified hover + keyboard affordance */
+button{
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background-color .12s ease, opacity .12s ease;
+}
+button:hover{transform: translateY(-1px);}
+button:active{transform: translateY(0px);}
+
+.primary-btn:hover{box-shadow:0 0 0 4px rgba(142,162,255,.14), 0 12px 30px rgba(0,0,0,.25);}
+.ghost-btn:hover{background:rgba(142,162,255,.06); border-color:rgba(142,162,255,.55);}
+.decision-btn:hover{box-shadow:0 0 0 4px rgba(142,162,255,.12); border-color:rgba(142,162,255,.55);}
+.decision-btn.deny:hover{box-shadow:0 0 0 4px rgba(240,106,106,.18); border-color:rgba(240,106,106,.55);}
+.decision-btn.allow:hover{box-shadow:0 0 0 4px rgba(101,201,139,.18); border-color:rgba(101,201,139,.55);}
+.secondary-btn:hover{background:rgba(142,162,255,.06); border-color:rgba(142,162,255,.45);}
+.sample-button:hover{background:rgba(142,162,255,.14); border-color:rgba(142,162,255,.50);}
+
+@media (prefers-reduced-motion: reduce){
+  button{transition:none!important;}
+  button:hover{transform:none;}
+}
 
 /* base layout primitives */
 *{box-sizing:border-box}
