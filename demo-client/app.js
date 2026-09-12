@@ -239,6 +239,28 @@ async function handleBlock() {
   pending = null;
 }
 
+async function writeClipboard(text) {
+  try {
+    if (!text) return;
+    if (!navigator.clipboard?.writeText) return;
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // Fail closed: UI remains correct even if clipboard permissions are denied.
+  }
+}
+
+function setFormStatus(message) {
+  if (formStatus) formStatus.textContent = message;
+}
+
+async function onOutcomeAndClipboard(kind) {
+  if (!pending) return;
+  if (kind === "redacted") {
+    // handled by caller
+    return;
+  }
+}
+
 async function handleRedact() {
   if (!pending) return;
   const ids = getSelectedFindingIds();
@@ -250,6 +272,7 @@ async function handleRedact() {
   const result = await engineRequest("redact", { text: pending.text, findingIds: ids, policy: currentPolicy });
   showOutcome("redacted", "Redacted locally", `${ids.length} sensitive value${ids.length === 1 ? " was" : "s were"} redacted.`);
   if (livePreviewText) livePreviewText.textContent = result.redactedText;
+  await writeClipboard(result.redactedText);
   pending = null;
 }
 
@@ -257,8 +280,11 @@ async function handleAllowOnce() {
   if (!pending) return;
   // Allow once = let original text through for that one inspection decision.
   showOutcome("allowed", "Allowed once", "Original text allowed for this inspection decision only.");
+  await writeClipboard(pending.text);
   pending = null;
 }
+
+// (Single handleBlock implementation is defined above.)
 
 function reset() {
   pending = null;
