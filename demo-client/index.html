@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Sentinel AI Workspace</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" aria-labelledby="workspace-title">
+      <header class="topbar">
+        <a class="brand" href="#workspace" aria-label="Sentinel workspace home">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span><strong>Sentinel</strong><small>AI Workspace</small></span>
+        </a>
+        <div class="engine-state" data-engine-state="checking">
+          <span class="engine-dot" aria-hidden="true"></span>
+          <span id="engine-label">Checking local engine</span>
+          <code>127.0.0.1:8787</code>
+        </div>
+      </header>
+
+      <section class="workspace-grid" id="workspace">
+        <div class="conversation-panel">
+          <div class="conversation-heading">
+            <div>
+              <p class="context-label">Controlled demonstration client</p>
+              <h1 id="workspace-title">Prompt workspace</h1>
+            </div>
+            <span class="simulation-chip">Simulation only</span>
+          </div>
+
+          <div class="message-stream" id="message-stream" aria-live="polite">
+            <article class="system-note">
+              <span class="system-icon" aria-hidden="true">S</span>
+              <div>
+                <strong>Local protection is active</strong>
+                <p>Prompts pause at the Sentinel checkpoint before this workspace simulates a send.</p>
+              </div>
+            </article>
+            <div class="empty-conversation" id="empty-conversation">
+              <div class="boundary-glyph" aria-hidden="true"><span></span></div>
+              <p>No prompts have crossed the boundary.</p>
+              <small>Choose a sample below to test the local interception flow.</small>
+            </div>
+          </div>
+
+          <form class="composer" id="prompt-form">
+            <div class="sample-tabs" role="group" aria-label="Demo prompt samples">
+              <button type="button" class="sample-button" data-sample="safe">Safe</button>
+              <button type="button" class="sample-button is-active" data-sample="sensitive">Sensitive</button>
+              <button type="button" class="sample-button" data-sample="ambiguous">Ambiguous</button>
+            </div>
+            <label for="prompt-input">Prompt</label>
+            <div class="compose-box" id="compose-box">
+              <textarea id="prompt-input" rows="6" spellcheck="false"></textarea>
+              <div class="compose-footer">
+                <span class="local-note"><span aria-hidden="true">⌁</span> Checked on this device</span>
+                <button type="submit" class="send-button" id="send-button">
+                  <span>Send</span>
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m4 10 11-6-3 12-2.6-4L4 10Z" /></svg>
+                </button>
+              </div>
+              <div class="scan-line" id="scan-line" aria-hidden="true"></div>
+            </div>
+            <p class="form-status" id="form-status" role="status"></p>
+          </form>
+        </div>
+
+        <aside class="checkpoint-panel" aria-labelledby="checkpoint-title">
+          <div class="checkpoint-header">
+            <span class="checkpoint-symbol" aria-hidden="true"><i></i></span>
+            <div>
+              <p class="context-label">Local trust checkpoint</p>
+              <h2 id="checkpoint-title">Ready to inspect</h2>
+            </div>
+          </div>
+
+          <section class="checkpoint-state checkpoint-idle" id="checkpoint-idle">
+            <div class="idle-orbit" aria-hidden="true"><span></span><i></i></div>
+            <h3>Nothing is leaving yet</h3>
+            <p>Sentinel will inspect the next prompt locally and pause it here if sensitive values are found.</p>
+            <dl class="privacy-facts">
+              <div><dt>Detection</dt><dd>Pattern + entropy</dd></div>
+              <div><dt>Processing</dt><dd>Local only</dd></div>
+              <div><dt>Persistent bypass</dt><dd>Never</dd></div>
+            </dl>
+          </section>
+
+          <section class="checkpoint-state review-state" id="review-state" hidden>
+            <div class="review-summary">
+              <span id="finding-count">0 findings</span>
+              <strong>Review before sending</strong>
+              <p>The original prompt is paused locally. Select what to redact, then choose an action.</p>
+            </div>
+            <div class="finding-list" id="finding-list"></div>
+            <div class="decision-stack">
+              <button type="button" class="decision-button redact-button" id="redact-button">Redact &amp; Send</button>
+              <button type="button" class="decision-button block-button" id="block-button">Block</button>
+              <button type="button" class="allow-button" id="allow-button">Allow once</button>
+            </div>
+          </section>
+
+          <section class="checkpoint-state outcome-state" id="outcome-state" hidden>
+            <span class="outcome-icon" id="outcome-icon" aria-hidden="true"></span>
+            <h3 id="outcome-title"></h3>
+            <p id="outcome-copy"></p>
+            <button type="button" class="reset-button" id="reset-button">Inspect another prompt</button>
+          </section>
+
+          <section class="activity-section" aria-labelledby="activity-title">
+            <div class="activity-heading">
+              <h3 id="activity-title">Local activity</h3>
+              <span>Sanitized</span>
+            </div>
+            <ol class="activity-list" id="activity-list">
+              <li class="activity-empty">No decisions recorded this session.</li>
+            </ol>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

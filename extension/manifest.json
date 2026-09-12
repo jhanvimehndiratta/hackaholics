@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Sentinel Local Prompt Firewall",
+  "version": "0.1.0",
+  "description": "Intercepts the controlled Sentinel demo and routes prompt checks to a local engine.",
+  "permissions": [],
+  "host_permissions": [
+    "http://127.0.0.1:8787/*",
+    "http://localhost:8787/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://localhost/*",
+        "https://127.0.0.1/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_title": "Sentinel is protecting this local demo"
+  }
+}
