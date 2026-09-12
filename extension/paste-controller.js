@@ -2,12 +2,13 @@
   "use strict";
 
   function editableTarget(node) {
-    let current = node;
+    const original = node;
+    let current = node?.nodeType === 3 ? node.parentElement || node.parentNode : node;
     while (current) {
       if (current.isContentEditable) return current;
-      current = current.parentElement;
+      current = current.parentElement || current.parentNode;
     }
-    return node;
+    return original;
   }
 
   function isSupportedInput(node) {
@@ -29,6 +30,15 @@
     return { kind: "contenteditable", target, range: selection.getRangeAt(0).cloneRange() };
   }
 
+  function setControlValue(target, value) {
+    const view = target.ownerDocument?.defaultView;
+    const tag = String(target.tagName || "").toUpperCase();
+    const prototype = tag === "TEXTAREA" ? view?.HTMLTextAreaElement?.prototype : view?.HTMLInputElement?.prototype;
+    const setter = prototype && Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+    if (setter) setter.call(target, value);
+    else target.value = value;
+  }
+
   function restoreAndInsert(snapshot, text, selectionProvider) {
     if (!snapshot || snapshot.target.isConnected === false) throw new Error("The editable selection is no longer available. Paste was blocked.");
     const target = snapshot.target;
@@ -36,7 +46,7 @@
     if (snapshot.kind === "control") {
       if (!Number.isInteger(snapshot.start) || !Number.isInteger(snapshot.end)) throw new Error("The text selection is unavailable. Paste was blocked.");
       const original = String(target.value || "");
-      target.value = original.slice(0, snapshot.start) + text + original.slice(snapshot.end);
+      setControlValue(target, original.slice(0, snapshot.start) + text + original.slice(snapshot.end));
       const caret = snapshot.start + text.length;
       target.setSelectionRange?.(caret, caret);
     } else {
@@ -50,7 +60,7 @@
       selection.removeAllRanges(); selection.addRange(range);
     }
     const EventConstructor = target.ownerDocument?.defaultView?.InputEvent || root.InputEvent || root.Event;
-    target.dispatchEvent?.(new EventConstructor("input", { bubbles: true, inputType: "insertFromPaste", data: text }));
+    target.dispatchEvent?.(new EventConstructor("input", { bubbles: true, composed: true, inputType: "insertFromPaste", data: text }));
   }
 
   function createController({ engine, sitePolicy, pageOrigin, renderReview, renderError, selectionProvider = () => root.getSelection() }) {

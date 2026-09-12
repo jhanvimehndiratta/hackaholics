@@ -25,6 +25,15 @@
     document.documentElement.appendChild(notice);
   }
 
+  function runReviewAction(action) {
+    try {
+      action();
+      removeReview();
+    } catch (error) {
+      renderError(`Sentinel could not insert the approved text. Paste remained blocked. ${error.message}`);
+    }
+  }
+
   function renderReview({ findings, actions }) {
     removeReview();
     const backdrop = document.createElement("div");
@@ -47,9 +56,13 @@
     });
     const controls = document.createElement("div"); controls.style.cssText = "display:flex;gap:8px;justify-content:flex-end;margin-top:16px";
     controls.append(
-      button("Block", () => { actions.block(); removeReview(); }),
-      button("Allow once", () => { actions.allowOnce(); removeReview(); }),
-      button("Redact and paste", () => { const ids = checks.filter((c) => c.checked).map((c) => c.value); if (!ids.length) return; actions.redact(ids); removeReview(); }, true)
+      button("Block", () => runReviewAction(actions.block)),
+      button("Allow once", () => runReviewAction(actions.allowOnce)),
+      button("Redact and paste", () => {
+        const ids = checks.filter((check) => check.checked).map((check) => check.value);
+        if (!ids.length) return;
+        runReviewAction(() => actions.redact(ids));
+      }, true)
     );
     overlay.append(title, explanation, list, controls);
     document.documentElement.append(backdrop, overlay);
