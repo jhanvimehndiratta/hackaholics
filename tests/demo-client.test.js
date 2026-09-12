@@ -158,6 +158,12 @@ test("balanced entropy is allowed while benign UUID reports a zero-finding false
   assert.equal(uuid.elements["state-outcome"].hidden, false);
   assert.match(uuid.elements["outcome-copy"].textContent, /false-positive test passed: zero findings/i);
   assert.equal(uuid.elements["finding-list"].children.length, 0);
+
+  const editedUuid = createHarness();
+  await editedUuid.samples.ambiguous.dispatch("click");
+  editedUuid.elements["prompt-input"].value = "ordinary edited text";
+  await editedUuid.elements["prompt-form"].dispatch("submit");
+  assert.doesNotMatch(editedUuid.elements["outcome-copy"].textContent, /false-positive/i);
 });
 
 test("redact and allow once copy the correct text and show confirmation", async () => {

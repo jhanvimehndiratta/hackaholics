@@ -34,8 +34,8 @@ jobs:
         run: |
           PYTHONPATH=. python3 engine/tests/generate_browser_fixtures.py "$RUNNER_TEMP/browser-engine-parity.json"
           cmp tests/fixtures/browser-engine-parity.json "$RUNNER_TEMP/browser-engine-parity.json"
-      - name: Run browser and paste-firewall tests
-        run: node --test tests/browser-engine.test.js tests/paste-firewall.test.js
+      - name: Run browser, Pages, and extension tests
+        run: node --test tests/*.test.js
       - name: Verify extension engine is byte-identical
         run: cmp shared/sentinel-engine.js extension/shared/sentinel-engine.js
       - name: Validate Manifest V3 permissions and script order
@@ -45,7 +45,7 @@ jobs:
             if (m.manifest_version !== 3) throw new Error("Must be Manifest V3");
             const content = m.content_scripts[0];
             if (JSON.stringify(content.matches) !== JSON.stringify(["<all_urls>"])) throw new Error("Expected <all_urls>");
-            const expected = ["shared/sentinel-engine.js", "paste-controller.js", "content.js"];
+            const expected = ["shared/sentinel-engine.js", "site-policy.js", "paste-controller.js", "content.js"];
             if (JSON.stringify(content.js) !== JSON.stringify(expected)) throw new Error("Incorrect content-script order");
             if ((m.host_permissions || []).length) throw new Error("Unexpected host permissions");
           '

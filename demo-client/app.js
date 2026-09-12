@@ -200,6 +200,7 @@ function showReview(analysis, text) {
 async function submitPrompt() {
   if (!input) return;
   const text = input.value.trim();
+  const submittedSample = input.value === samples[lastSample] ? lastSample : null;
   if (!text) {
     setFormStatus("Paste text to inspect.");
     return;
@@ -215,7 +216,7 @@ async function submitPrompt() {
     if (analysis.decision === "allow") {
       pending = null;
       const copy =
-        lastSample === "ambiguous"
+        submittedSample === "ambiguous" && analysis.findings.length === 0
           ? "Benign UUID false-positive test passed: zero findings."
           : `No sensitive values were detected under ${currentPolicy} policy.`;
       showOutcome("Original text allowed", copy);
