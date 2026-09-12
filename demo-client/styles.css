@@ -32,22 +32,24 @@ body::before{
   z-index:0;
   transform: translateZ(0);
 
-  /* Cinematic backdrop: navy-black canvas + centered vertical beam */
-
-
-  /* Full-viewport cinematic radar image backdrop */
+  /* Radar-like backdrop built from pure gradients (no image dependency). */
   background-image:
-    /* vignette + radial mood above the radar image */
-    radial-gradient(1200px 900px at 50% 15%, rgba(9,13,22,0) 40%, rgba(9,13,22,.82) 82%);
+    /* vignette */
+    radial-gradient(1200px 900px at 50% 15%, rgba(9,13,22,0) 35%, rgba(9,13,22,.86) 80%),
+    /* lower bloom */
+    radial-gradient(900px 420px at 50% 92%, rgba(59,130,246,.22), rgba(9,13,22,0) 60%),
+    /* rings */
+    repeating-radial-gradient(circle at 50% 35%, rgba(142,162,255,.16) 0 1px, rgba(9,13,22,0) 1px 44px),
+    /* spokes */
+    repeating-linear-gradient(0deg, rgba(142,162,255,.06) 0 1px, rgba(9,13,22,0) 1px 24px),
+    repeating-linear-gradient(90deg, rgba(142,162,255,.06) 0 1px, rgba(9,13,22,0) 1px 24px);
 
-  background-repeat: no-repeat;
-  background-size: cover, cover;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+  background-size: cover, cover, cover, cover, cover;
+  background-position: center top, center, 50% 35%, center, center;
 
-  /* Slightly above hero center */
-  background-position: center top, 50% 40%;
-
-  /* Opacity so panels remain readable */
-  opacity: .45;
+  /* Visible enough to see behind panels */
+  opacity: .70;"}]}            }]} }]}}, errors?}]]}]}]} }**
 }
 
 body::after{
