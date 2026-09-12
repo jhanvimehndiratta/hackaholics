@@ -59,9 +59,14 @@
   if (!/^https?:$/.test(location.protocol)) return;
   const engine = globalThis.SentinelEngine;
   const paste = globalThis.SentinelPaste;
-  if (!paste) return;
+  const policyApi = globalThis.SentinelSitePolicy;
+  if (!paste || !policyApi) return;
+  const pageOrigin = policyApi.normalizeOrigin(location.href);
+  const sitePolicy = policyApi.createStore(chrome.storage.local, chrome.storage.onChanged);
   const controller = paste.createController({
     engine: engine || { analyzeText() { throw new Error("Browser engine unavailable"); } },
+    sitePolicy,
+    pageOrigin,
     renderReview,
     renderError,
   });

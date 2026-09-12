@@ -1,15 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Sentinel Local Prompt Firewall",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "Pauses sensitive clipboard pastes before insertion and analyzes them locally in your browser.",
-  "permissions": [],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": [],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": [
         "shared/sentinel-engine.js",
+        "site-policy.js",
         "paste-controller.js",
         "content.js"
       ],
@@ -18,6 +19,7 @@
     }
   ],
   "action": {
-    "default_title": "Sentinel protects supported editable fields"
+    "default_title": "Sentinel site protection",
+    "default_popup": "popup.html"
   }
 }

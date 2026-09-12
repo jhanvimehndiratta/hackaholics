@@ -53,7 +53,7 @@
     target.dispatchEvent?.(new EventConstructor("input", { bubbles: true, inputType: "insertFromPaste", data: text }));
   }
 
-  function createController({ engine, renderReview, renderError, selectionProvider = () => root.getSelection() }) {
+  function createController({ engine, sitePolicy, pageOrigin, renderReview, renderError, selectionProvider = () => root.getSelection() }) {
     async function handlePaste(event, policy = "balanced") {
       if (!isSupportedInput(event.target)) return { intercepted: false };
       const text = event.clipboardData?.getData("text/plain");
@@ -63,6 +63,15 @@
       const snapshot = captureSelection(event.target, selectionProvider);
       if (!snapshot) { renderError("Sentinel could not preserve the current selection. Paste remained blocked."); return { intercepted: true, blocked: true }; }
       try {
+        if (sitePolicy) {
+          if (!pageOrigin) throw new Error("Unsupported page origin");
+          const paused = await Promise.resolve(sitePolicy.isPaused(pageOrigin));
+          if (typeof paused !== "boolean") throw new Error("Invalid site policy response");
+          if (paused) {
+            restoreAndInsert(snapshot, text, selectionProvider);
+            return { intercepted: true, inserted: true, decision: "site_paused" };
+          }
+        }
         const analysis = await Promise.resolve(engine.analyzeText(text, policy));
         if (!analysis || !Array.isArray(analysis.findings)) throw new Error("Invalid analysis response");
         if (analysis.decision === "allow" && analysis.findings.length === 0) {
