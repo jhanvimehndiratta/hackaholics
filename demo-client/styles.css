@@ -49,7 +49,7 @@ body::before{
   background-position: center top, center, 50% 35%, center, center;
 
   /* Visible enough to see behind panels */
-  opacity: .70;"}]}            }]} }]}}, errors?}]]}]}]} }**
+  opacity:.70;
 }
 
 body::after{
@@ -165,7 +165,13 @@ textarea{width:100%;resize:vertical;min-height:160px;background:transparent;bord
 .meta-v{flex:1;color:var(--text);font-size:12px}
 
 .primary-btn{background:var(--signal);border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer}
-.primary-btn:disabled{opacity:.6;cursor:not-allowed}
+.primary-btn:disabled,.secondary-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+
+.policy-selector{display:flex;align-items:center;gap:12px;margin-top:14px}
+.policy-label{color:var(--muted);font-size:12px}
+.policy-buttons{display:flex;gap:8px}
+.policy-buttons .ghost-btn{padding:7px 11px}
+.policy-buttons .ghost-btn[aria-pressed="true"]{background:rgba(142,162,255,.18);border-color:var(--signal);color:var(--text)}
 
 .form-status{margin:10px 0 0;color:var(--muted);min-height:18px}
 
@@ -196,8 +202,8 @@ textarea{width:100%;resize:vertical;min-height:160px;background:transparent;bord
 #finding-list{padding:6px}
 .finding-row{align-items:start}
 .finding-cell{display:flex;align-items:flex-start}
-.finding-table-head{display:grid;grid-template-columns:1fr 1.4fr .7fr;gap:10px;background:rgba(42,52,72,.6);padding:10px;font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-.finding-row{display:grid;grid-template-columns:1fr 1.4fr .7fr;gap:10px;padding:10px;border-top:1px solid rgba(42,52,72,.8);font-size:12px}
+.finding-table-head{display:grid;grid-template-columns:1fr 1.4fr .7fr .45fr;gap:10px;background:rgba(42,52,72,.6);padding:10px;font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+.finding-row{display:grid;grid-template-columns:1fr 1.4fr .7fr .45fr;gap:10px;padding:10px;border-top:1px solid rgba(42,52,72,.8);font-size:12px}
 .finding-cell code{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 
 .decision-actions{display:flex;flex-direction:column;gap:10px;margin-top:12px}

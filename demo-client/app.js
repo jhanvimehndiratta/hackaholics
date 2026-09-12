@@ -8,68 +8,36 @@ const samples = {
     "The build artifact 550e8400e29b41d4a716446655440000 failed validation. What should I inspect next?",
 };
 
-const findingCopy = {
-  aws_access_key: ["AWS access key", "Credential-shaped value matched an AWS access-key rule."],
-  github_token: ["GitHub token", "Token prefix and length match a GitHub credential format."],
-  api_key: ["API credential", "A named API key assignment contains a credential-shaped value."],
-  database_url: ["Database credential", "This connection URL includes a username and password."],
-  password: ["Password", "A named password field contains a value that should not leave this device."],
-  email: ["Email address", "A personal contact address appears in the prompt."],
-  internal_ip: ["Internal IP address", "This address is inside an RFC1918 private network range."],
-  suspected_secret: ["Suspected secret (Entropy ≥ 3.5)", "A high-entropy token appears in a named secret context under Strict policy."],
-};
-
 const form = document.querySelector("#prompt-form");
-// Some legacy markup versions may not include all optional elements.
 const input = document.querySelector("#prompt-input");
 const sendButton = document.querySelector("#send-button");
-const composeBox = document.querySelector("#compose-box");
-const scanLine = document.querySelector("#scan-line");
 const formStatus = document.querySelector("#form-status");
-
-const promptPanel = document.querySelector("#prompt-panel");
-
 const statusLine = document.querySelector("#status-line");
-const privacyToggle = document.querySelector("#privacy-toggle");
-const privacyNote = document.querySelector("#privacy-note");
-// Optional elements: guard bindings below so missing markup can't crash startup.
 const reviewPolicyName = document.querySelector("#review-policy-name");
 const findingCount = document.querySelector("#finding-count");
 const livePreviewText = document.querySelector("#live-preview-text");
-
-// (Older markup references these IDs; the new UI may omit them.)
-// Keep them optional and never assume existence.
-const _unused_guards = { reviewPolicyName, findingCount, livePreviewText };
-
 const checkpointTitle = document.querySelector("#checkpoint-title");
 const idleState = document.querySelector("#state-idle");
 const analyzingState = document.querySelector("#state-analyzing");
 const reviewState = document.querySelector("#state-review");
 const outcomeState = document.querySelector("#state-outcome");
 const offlineState = document.querySelector("#state-offline");
-
 const findingList = document.querySelector("#finding-list");
-
 const outcomeTitle = document.querySelector("#outcome-title");
 const outcomeCopy = document.querySelector("#outcome-copy");
+const clipboardStatus = document.querySelector("#clipboard-status");
+const copyButton = document.querySelector("#copy-button");
 const resetButton = document.querySelector("#reset-button");
-
 const redactButton = document.querySelector("#redact-button");
 const blockButton = document.querySelector("#block-button");
 const allowButton = document.querySelector("#allow-button");
-
-const exportMdBtn = document.querySelector("#export-md-btn");
 const policyBalancedBtn = document.querySelector("#policy-balanced-btn");
 const policyStrictBtn = document.querySelector("#policy-strict-btn");
-const activePolicyIndicator = document.querySelector("#active-policy-indicator");
-
-// NOTE: optional elements are guarded above so missing markup can't crash startup.
-
-const policyButtons = [policyBalancedBtn, policyStrictBtn].filter(Boolean);
 
 let currentPolicy = "balanced";
 let pending = null;
-let reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let lastSample = null;
+let clipboardText = "";
 
 async function engineRequest(action, payload = {}) {
   const engine = globalThis.SentinelEngine;
@@ -81,38 +49,65 @@ async function engineRequest(action, payload = {}) {
 }
 
 function setState(state) {
-  const map = {
+  const states = {
     idle: idleState,
     analyzing: analyzingState,
     review: reviewState,
     outcome: outcomeState,
     offline: offlineState,
   };
-  for (const [key, el] of Object.entries(map)) {
-    if (!el) continue;
-    el.hidden = key !== state;
+
+  for (const [name, element] of Object.entries(states)) {
+    if (element) element.hidden = name !== state;
   }
+
   if (state === "idle" && statusLine) statusLine.textContent = "Ready for local inspection.";
 }
 
 function setEngineStatus(status, label) {
-  const engineBadge = document.querySelector("#engine-status-badge");
+  const badge = document.querySelector("#engine-status-badge");
   const engineLabel = document.querySelector("#engine-label");
-  if (engineBadge) engineBadge.dataset.engineState = status;
+  if (badge) badge.dataset.engineState = status;
   if (engineLabel) engineLabel.textContent = label;
-  if (stateLineForEngine(status)) {
-    // no-op; we rely on offline panel for availability
+}
+
+function setFormStatus(message) {
+  if (formStatus) formStatus.textContent = message;
+}
+
+function setClipboardResult(text, message = "") {
+  clipboardText = text || "";
+  if (copyButton) copyButton.disabled = !clipboardText;
+  if (clipboardStatus) clipboardStatus.textContent = message;
+}
+
+async function writeClipboard(text) {
+  setClipboardResult(text);
+
+  if (!text || !navigator.clipboard?.writeText) {
+    setClipboardResult(text, "Clipboard access failed — use Copy manually.");
+    return false;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    setClipboardResult(text, "Copied to clipboard");
+    return true;
+  } catch {
+    setClipboardResult(text, "Clipboard access failed — use Copy manually.");
+    return false;
   }
 }
 
-// Placeholder for older markup versions; intentionally no-op.
-function stateLineForEngine() {
-  return false;
+function setPolicy(policy) {
+  currentPolicy = policy;
+  if (policyBalancedBtn) policyBalancedBtn.setAttribute("aria-pressed", String(policy === "balanced"));
+  if (policyStrictBtn) policyStrictBtn.setAttribute("aria-pressed", String(policy === "strict"));
 }
 
 function computePreview(text, findings, selectedIds) {
   const selectedFindings = findings
-    .filter((f) => selectedIds.includes(f.id))
+    .filter((finding) => selectedIds.includes(finding.id))
     .sort((a, b) => b.range.start - a.range.start);
 
   let result = text;
@@ -126,7 +121,6 @@ function computePreview(text, findings, selectedIds) {
 function renderFindings(findings) {
   if (!findingList) return;
 
-  // table-like rows
   findingList.replaceChildren(
     ...findings.map((finding) => {
       const row = document.createElement("div");
@@ -141,7 +135,6 @@ function renderFindings(findings) {
       const evidence = document.createElement("div");
       evidence.className = "finding-cell finding-evidence";
       evidence.setAttribute("role", "cell");
-      // Evidence must be masked: safePreview only.
       const code = document.createElement("code");
       code.textContent = finding.safePreview;
       evidence.appendChild(code);
@@ -158,7 +151,8 @@ function renderFindings(findings) {
       checkbox.type = "checkbox";
       checkbox.checked = true;
       checkbox.value = finding.id;
-      checkbox.addEventListener("change", () => updatePreview());
+      checkbox.setAttribute("aria-label", `Redact ${finding.type}`);
+      checkbox.addEventListener("change", updatePreview);
       action.appendChild(checkbox);
 
       row.append(rule, evidence, severity, action);
@@ -169,185 +163,161 @@ function renderFindings(findings) {
 
 function getSelectedFindingIds() {
   if (!findingList) return [];
-  return [...findingList.querySelectorAll("input[type=checkbox]:checked")].map((c) => c.value);
+  return [...findingList.querySelectorAll('input[type="checkbox"]:checked')].map(
+    (checkbox) => checkbox.value
+  );
 }
 
 function updatePreview() {
   if (!pending || !livePreviewText) return;
-  const selectedIds = getSelectedFindingIds();
-  const preview = computePreview(pending.text, pending.findings, selectedIds);
-  livePreviewText.textContent = preview;
+  livePreviewText.textContent = computePreview(
+    pending.text,
+    pending.findings,
+    getSelectedFindingIds()
+  );
 }
 
-function showOffline() {
-  setState("offline");
-}
-
-function showAnalyzing() {
-  setState("analyzing");
-}
-
-function showReview(analysis) {
-  pending = { text: input.value, findings: analysis.findings };
-
-  if (checkpointTitle) checkpointTitle.textContent = "Review required";
-  if (reviewPolicyName) reviewPolicyName.textContent = currentPolicy;
-  if (findingCount) findingCount.textContent = `${analysis.findings.length} finding${analysis.findings.length === 1 ? "" : "s"}`;
-
-  renderFindings(analysis.findings);
-  updatePreview();
-
-  setState("review");
-}
-
-function showOutcome(kind, title, copy) {
-  outcomeTitle.textContent = title;
-  outcomeCopy.textContent = copy;
+function showOutcome(title, copy) {
+  if (outcomeTitle) outcomeTitle.textContent = title;
+  if (outcomeCopy) outcomeCopy.textContent = copy;
   setState("outcome");
 }
 
+function showReview(analysis, text) {
+  pending = { text, findings: analysis.findings };
+  if (checkpointTitle) checkpointTitle.textContent = "Review required";
+  if (reviewPolicyName) reviewPolicyName.textContent = currentPolicy;
+  if (findingCount) {
+    findingCount.textContent = `${analysis.findings.length} finding${
+      analysis.findings.length === 1 ? "" : "s"
+    }`;
+  }
+  renderFindings(analysis.findings);
+  updatePreview();
+  setState("review");
+}
+
 async function submitPrompt() {
+  if (!input) return;
   const text = input.value.trim();
   if (!text) {
-    if (formStatus) formStatus.textContent = "Paste text to inspect.";
+    setFormStatus("Paste text to inspect.");
     return;
   }
 
-  if (formStatus) formStatus.textContent = "";
-  sendButton.disabled = true;
+  setFormStatus("");
+  setClipboardResult("");
+  if (sendButton) sendButton.disabled = true;
+  setState("analyzing");
 
   try {
     const analysis = await engineRequest("analyze", { text, policy: currentPolicy });
     if (analysis.decision === "allow") {
-      // No hidden send/chat model: show outcome only.
       pending = null;
-      showOutcome("allowed", "Original text allowed", `No sensitive values were detected under ${currentPolicy} policy.`);
+      const copy =
+        lastSample === "ambiguous"
+          ? "Benign UUID false-positive test passed: zero findings."
+          : `No sensitive values were detected under ${currentPolicy} policy.`;
+      showOutcome("Original text allowed", copy);
     } else {
-      showReview(analysis);
+      showReview(analysis, text);
     }
   } catch (error) {
-    if (formStatus) formStatus.textContent = error.message;
-    showOffline();
+    setFormStatus(error.message);
+    setState("offline");
   } finally {
-    sendButton.disabled = false;
+    if (sendButton) sendButton.disabled = false;
   }
 }
 
-async function handleBlock() {
+function handleBlock() {
   if (!pending) return;
-  showOutcome("blocked", "Blocked before insertion", "No text was inserted after local inspection.");
+  showOutcome("Blocked before insertion", "No text was inserted after local inspection.");
+  setClipboardResult("");
   pending = null;
-}
-
-async function writeClipboard(text) {
-  try {
-    if (!text) return;
-    if (!navigator.clipboard?.writeText) return;
-    await navigator.clipboard.writeText(text);
-  } catch {
-    // Fail closed: UI remains correct even if clipboard permissions are denied.
-  }
-}
-
-function setFormStatus(message) {
-  if (formStatus) formStatus.textContent = message;
-}
-
-async function onOutcomeAndClipboard(kind) {
-  if (!pending) return;
-  if (kind === "redacted") {
-    // handled by caller
-    return;
-  }
 }
 
 async function handleRedact() {
   if (!pending) return;
-  const ids = getSelectedFindingIds();
-  if (!ids.length) {
-    if (formStatus) formStatus.textContent = "Select at least one finding to redact.";
+  const findingIds = getSelectedFindingIds();
+  if (!findingIds.length) {
+    setFormStatus("Select at least one finding to redact.");
     return;
   }
 
-  const result = await engineRequest("redact", { text: pending.text, findingIds: ids, policy: currentPolicy });
-  showOutcome("redacted", "Redacted locally", `${ids.length} sensitive value${ids.length === 1 ? " was" : "s were"} redacted.`);
-  if (livePreviewText) livePreviewText.textContent = result.redactedText;
-  await writeClipboard(result.redactedText);
-  pending = null;
+  try {
+    const result = await engineRequest("redact", {
+      text: pending.text,
+      findingIds,
+      policy: currentPolicy,
+    });
+    showOutcome(
+      "Redacted locally",
+      `${findingIds.length} sensitive value${findingIds.length === 1 ? " was" : "s were"} redacted.`
+    );
+    await writeClipboard(result.redactedText);
+    setFormStatus(clipboardStatus?.textContent || "");
+    pending = null;
+  } catch (error) {
+    setFormStatus(error.message);
+  }
 }
 
 async function handleAllowOnce() {
   if (!pending) return;
-  // Allow once = let original text through for that one inspection decision.
-  showOutcome("allowed", "Allowed once", "Original text allowed for this inspection decision only.");
-  await writeClipboard(pending.text);
+  const originalText = pending.text;
+  showOutcome("Allowed once", "Original text allowed for this inspection decision only.");
+  await writeClipboard(originalText);
+  setFormStatus(clipboardStatus?.textContent || "");
   pending = null;
 }
 
-// (Single handleBlock implementation is defined above.)
-
-function reset() {
+function reset({ clearInput = true } = {}) {
   pending = null;
-  input.value = "";
-  if (formStatus) formStatus.textContent = "";
-  // Ensure status chip goes back to the Ready-to-inspect label.
+  lastSample = clearInput ? null : lastSample;
+  if (clearInput && input) input.value = "";
+  setFormStatus("");
+  setClipboardResult("");
+  if (findingList) findingList.replaceChildren();
   if (checkpointTitle) checkpointTitle.textContent = "Ready to inspect";
   setState("idle");
-}
-
-function initPolicyUI() {
-  // Keep policy buttons if they exist in older markup.
-  if (policyButtons.length === 2) {
-    policyBalancedBtn?.addEventListener("click", () => {
-      currentPolicy = "balanced";
-      reset();
-    });
-    policyStrictBtn?.addEventListener("click", () => {
-      currentPolicy = "strict";
-      reset();
-    });
-  }
-}
-
-function initSampleUI() {
-  document.querySelectorAll(".sample-button").forEach((button) => {
-    button.addEventListener("click", () => {
-      const name = button.dataset.sample;
-      input.value = samples[name] || "";
-      if (formStatus) formStatus.textContent = "";
-      setState("idle");
-    });
-  });
-}
-
-function initPrivacyToggle() {
-  if (!privacyToggle || !privacyNote) return;
-  privacyToggle.addEventListener("click", () => {
-    const expanded = privacyToggle.getAttribute("aria-expanded") === "true";
-    privacyToggle.setAttribute("aria-expanded", String(!expanded));
-    privacyNote.hidden = expanded;
-  });
 }
 
 form?.addEventListener("submit", (event) => {
   event.preventDefault();
   submitPrompt();
 });
-// If markup accidentally omits #prompt-form, fall back to clicking the primary button.
-sendButton?.addEventListener("click", (e) => {
-  if (form) return;
-  e.preventDefault();
-  submitPrompt();
-});
+
+if (!form) {
+  sendButton?.addEventListener("click", (event) => {
+    event.preventDefault();
+    submitPrompt();
+  });
+}
 
 redactButton?.addEventListener("click", handleRedact);
 blockButton?.addEventListener("click", handleBlock);
 allowButton?.addEventListener("click", handleAllowOnce);
-resetButton?.addEventListener("click", reset);
+resetButton?.addEventListener("click", () => reset());
+copyButton?.addEventListener("click", () => writeClipboard(clipboardText));
+policyBalancedBtn?.addEventListener("click", () => {
+  setPolicy("balanced");
+  reset();
+});
+policyStrictBtn?.addEventListener("click", () => {
+  setPolicy("strict");
+  reset();
+});
 
-initSampleUI();
-initPrivacyToggle();
-initPolicyUI();
+document.querySelectorAll(".sample-button").forEach((button) => {
+  button.addEventListener("click", () => {
+    const sampleName = button.dataset.sample;
+    lastSample = sampleName;
+    setPolicy(sampleName === "entropy" ? "strict" : "balanced");
+    if (input) input.value = samples[sampleName] || "";
+    setState("idle");
+  });
+});
 
 async function checkEngine() {
   try {
@@ -356,9 +326,9 @@ async function checkEngine() {
     setState("idle");
   } catch {
     setEngineStatus("offline", "Engine unavailable");
-    showOffline();
+    setState("offline");
   }
 }
 
-setState("idle");
+setPolicy("balanced");
 checkEngine();

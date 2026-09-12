@@ -35,8 +35,17 @@
               <p class="hero-subtitle">Paste your text to inspect locally. Block or redact before anything reaches the page.</p>
 
               <p class="privacy-stamp" id="privacy-note" role="note">Analysis stays on this device. No uploads.</p>
+
+              <div class="policy-selector" aria-label="Detection policy">
+                <div class="policy-label">Detector mode</div>
+                <div class="policy-buttons">
+                  <button type="button" class="ghost-btn" id="policy-balanced-btn" aria-pressed="true">Balanced</button>
+                  <button type="button" class="ghost-btn" id="policy-strict-btn" aria-pressed="false">Strict</button>
+                </div>
+              </div>
             </div>
           </div>
+
 
           <form class="editor-card" id="prompt-form">
             <label class="editor-label" for="prompt-input">Your text</label>
@@ -119,6 +128,8 @@
               <span class="state-label" id="outcome-title"></span>
             </div>
             <p class="state-copy" id="outcome-copy"></p>
+            <p class="form-status" id="clipboard-status" role="status" aria-live="polite"></p>
+            <button type="button" class="secondary-btn" id="copy-button" disabled>Copy result to clipboard</button>
             <button type="button" class="secondary-btn" id="reset-button">Inspect another input</button>
           </div>
 
