@@ -161,6 +161,7 @@ function renderFindings(findings) {
       checkbox.addEventListener("change", () => updatePreview());
       action.appendChild(checkbox);
 
+      row.append(rule, evidence, severity, action);
       return row;
     })
   );
