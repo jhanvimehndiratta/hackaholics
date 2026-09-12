@@ -11,12 +11,82 @@
   --block:#f06a6a;
   --allowed:#65c98b;
   font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  background:var(--ground);
   color:var(--text);
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--ground);min-width:320px;min-height:100vh}
+
+body{
+  margin:0;
+  min-width:320px;
+  min-height:100vh;
+  background: #090d16;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Background layers: periwinkle beam + faint matrix glyphs + low-opacity vignette */
+body::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+
+  /* near-black slate + subtle vertical beam behind hero */
+  background:
+    radial-gradient(520px 700px at 58% 12%, rgba(142,162,255,.22), rgba(9,13,22,0) 62%),
+    linear-gradient(180deg, rgba(142,162,255,.10), rgba(9,13,22,0) 55%),
+    linear-gradient(90deg, rgba(42,52,72,.05) 1px, rgba(9,13,22,0) 1px),
+    linear-gradient(rgba(42,52,72,.05) 1px, rgba(9,13,22,0) 1px);
+
+  background-size: auto, auto, 64px 64px, 64px 64px;
+  opacity:.55;
+}
+
+body::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+
+  /* faint “matrix” texture via repeating conic + grainy dots (CSS-only) */
+  background:
+    repeating-linear-gradient(90deg, rgba(142,162,255,.06) 0 1px, rgba(9,13,22,0) 1px 8px),
+    repeating-linear-gradient(180deg, rgba(142,162,255,.03) 0 1px, rgba(9,13,22,0) 1px 10px),
+    radial-gradient(900px 520px at 50% 0%, rgba(9,13,22,0) 10%, rgba(9,13,22,.75) 70%);
+
+  opacity:.35;
+}
+
+/* Keep panels readable */
+main{position: relative; z-index: 1;}
+
+/* reduced motion: no animations anyway, but keep the rule for safety */
+@media (prefers-reduced-motion: reduce){
+  *{transition:none!important;animation:none!important}
+}
+
+main, header, section, aside { position: relative; z-index: 1; }
+
+/* Elevated “glass” panels */
+.inspection-panel,
+.decision-panel,
+.editor-card,
+.state-card{
+  background: rgba(21,27,42,.72);
+  backdrop-filter: blur(10px);
+}
+
+.editor-card,
+.decision-panel{
+  border-radius: 18px;
+}
+
+/* Ensure motion preferences are respected */
 button,textarea,input{font:inherit}
+button{color:inherit}
+button:focus-visible,textarea:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+
+/* base layout primitives */
+*{box-sizing:border-box}
 button{color:inherit}
 button:focus-visible,textarea:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
 
