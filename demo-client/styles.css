@@ -188,7 +188,12 @@ textarea{width:100%;resize:vertical;min-height:160px;background:transparent;bord
 #state-review .state-icon{background:rgba(240,179,90,.16);color:var(--review)}
 #state-blocked .state-icon{background:rgba(240,106,106,.16);color:var(--block)}
 
-.finding-table-wrap{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.finding-table-wrap{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:220px}
+
+/* Make the review table feel roomier */
+#finding-list{padding:6px}
+.finding-row{align-items:start}
+.finding-cell{display:flex;align-items:flex-start}
 .finding-table-head{display:grid;grid-template-columns:1fr 1.4fr .7fr;gap:10px;background:rgba(42,52,72,.6);padding:10px;font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
 .finding-row{display:grid;grid-template-columns:1fr 1.4fr .7fr;gap:10px;padding:10px;border-top:1px solid rgba(42,52,72,.8);font-size:12px}
 .finding-cell code{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
