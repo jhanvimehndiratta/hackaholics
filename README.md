@@ -1,216 +1,101 @@
-# Sentinel — Zero-Cloud Local Prompt & Clipboard Privacy Firewall
+# Sentinel — Local Prompt & Clipboard Privacy Firewall
 
 [![Sentinel CI](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/ci.yml/badge.svg)](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/ci.yml)
-[![Deploy Demo to GitHub Pages](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/pages.yml/badge.svg)](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/pages.yml)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jhanvimehndiratta/hackaholics)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
-[![Chrome Extension Manifest V3](https://img.shields.io/badge/extension-Manifest%20V3-brightgreen.svg)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
+[![Pages](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/pages.yml/badge.svg)](https://jhanvimehndiratta.github.io/hackaholics/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Sentinel** is a high-assurance, local-first privacy firewall that intercepts AI prompts and clipboard paste events before sensitive data can leak to external LLMs or cloud providers.
+Sentinel detects and redacts sensitive values before an AI prompt or clipboard paste leaves your control. Detection is deterministic and runs on-device; clipboard text is never sent to a cloud service.
 
-All detection, pattern analysis, Shannon entropy scoring, and redaction execute **100% locally on localhost with zero outbound cloud telemetry**.
+## Try the standalone web app
 
----
+Open **https://jhanvimehndiratta.github.io/hackaholics/**. The GitHub Pages app analyzes arbitrary text locally using the browser engine. It requires no FastAPI server and no extension.
 
-## Architecture Overview
+The page is a controlled prompt simulation. Visiting it **does not install or activate the Chrome extension** and therefore cannot intercept paste events on other websites.
 
-```text
-┌────────────────────────────────────────────────────────┐
-│               Browser / Web Client / DOM               │
-│                                                        │
-│  User types prompt / pastes clipboard data into input  │
-└──────────────────────────┬─────────────────────────────┘
-                           │ Intercepted in capture phase
-                           ▼
-┌────────────────────────────────────────────────────────┐
-│           Chrome Extension (Manifest V3)               │
-│                                                        │
-│  • Content Script: intercepts paste & prompt submit    │
-│  • Background Service Worker: relays to localhost      │
-└──────────────────────────┬─────────────────────────────┘
-                           │ Local HTTP (127.0.0.1:8787)
-                           ▼
-┌────────────────────────────────────────────────────────┐
-│         Sentinel Deterministic Engine (FastAPI)        │
-│                                                        │
-│  • RFC1918 Private IPv4 Detector (10/8, 172.16/12, etc)│
-│  • High-Entropy & Generic API Secret Detector          │
-│  • Named Credentials & Config Assignment Parser        │
-│  • Structured Database URL Detector                    │
-│  • PII (Emails, Names, Phone) Detector                 │
-│  • Overlap & Precedence Conflict Resolver              │
-│  • In-Memory Zero-Secret Audit Trail                   │
-└──────────────────────────┬─────────────────────────────┘
-                           │ Explainable Findings & Policy
-                           ▼
-┌────────────────────────────────────────────────────────┐
-│               Interactive Decision Modal               │
-│                                                        │
-│     [ Block ]    [ Redact & Send ]    [ Allow Once ]   │
-└────────────────────────────────────────────────────────┘
-```
+## Browser extension
 
----
+The extension uses the same browser engine as the Pages app and intercepts paste before insertion on supported fields:
 
-## 🚀 GitHub Repository
+- `textarea`
+- `input` types `text`, `search`, `url`, and `email`
+- `contenteditable` regions
 
-This project is published from [`jhanvimehndiratta/hackaholics`](https://github.com/jhanvimehndiratta/hackaholics) on the `main` branch.
+It does not inspect password inputs. Chrome does not inject content scripts into protected pages such as `chrome://`, browser settings, or extension pages.
 
-To clone it:
+### Why it requests access to all sites
+
+The manifest uses `<all_urls>` so Sentinel can protect supported editable fields on ordinary websites, including AI chat sites. This is a broad permission: Chrome may describe it as permission to read and change data on websites you visit. Sentinel uses that access only to observe paste events in the supported fields above, analyze clipboard text locally, and display a local review dialog. It has no cloud endpoint, telemetry, or host permission.
+
+Paste handling is fail-closed: Sentinel cancels the browser paste synchronously. Safe text is inserted only after analysis succeeds. Sensitive text remains outside the target DOM until you explicitly choose **Allow once**; **Redact and paste** inserts only the redacted result. If analysis fails, nothing is inserted.
+
+### Install from source
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/jhanvimehndiratta/hackaholics.git
+   cd hackaholics
+   ```
+2. Open `chrome://extensions` in Chrome or Chromium.
+3. Enable **Developer mode**.
+4. Choose **Load unpacked** and select the `extension/` directory.
+
+A future Chrome Web Store listing can provide normal installation; GitHub Pages cannot install an extension automatically.
+
+## Detection policies
+
+- **Balanced:** database URLs containing credentials, AWS and GitHub tokens, named API keys/passwords, email addresses, and RFC1918 private IPv4 addresses.
+- **Strict:** Balanced rules plus high-entropy values in named secret contexts (Shannon entropy `>= 3.5`).
+
+Findings include deterministic IDs, exact character ranges, severity, a safe preview, and a replacement. Redaction reanalyzes the original text and applies validated replacements from right to left. Audit records contain decisions and finding categories, never raw prompt or clipboard values.
+
+## Optional Python reference mode
+
+The FastAPI implementation remains the higher-assurance reference and fixture authority. It is not required by the Pages app or extension.
 
 ```bash
-git clone https://github.com/jhanvimehndiratta/hackaholics.git
-cd hackaholics
-```
-
-To push an existing local checkout that does not yet have a remote:
-
-```bash
-git remote add origin https://github.com/jhanvimehndiratta/hackaholics.git
-git branch -M main
-git push -u origin main
-```
-
----
-
-### 2. Automated GitHub Actions CI
-
-Once pushed, GitHub Actions immediately runs the test and validation matrix on every push or PR:
-
-- **Python Version Matrix**: Automatically tests against **Python 3.9, 3.10, 3.11, and 3.12**.
-- **Engine Unit Tests**: Runs `unittest discover -s engine/tests -v` (28/28 tests verifying RFC1918 rules, redaction safety, reverse index slicing, entropy detection, and audit isolation).
-- **Extension & Client Validation**: Verifies Chrome Manifest V3 JSON schema compliance and validates JavaScript syntax using `node --check`.
-
-Workflow file: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
-
----
-
-### 3. Automated GitHub Pages Demo
-
-The static client is published at [jhanvimehndiratta.github.io/hackaholics](https://jhanvimehndiratta.github.io/hackaholics/).
-
-One repository setting is required: open **Settings → Pages**, then set **Source** to **GitHub Actions**. If the source remains **Deploy from a branch**, GitHub runs the legacy `pages-build-deployment` flow and may render this README instead of `demo-client/`.
-
-A push to `main` that changes `demo-client/` or the Pages workflow deploys the static files through [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
-
-> **Static hosting boundary:** GitHub Pages hosts only the HTML, CSS, and JavaScript client. It does not run the FastAPI backend. Live analysis still requires the engine on `127.0.0.1:8787` and the unpacked Chrome extension. If Chrome blocks a hosted HTTPS page from reaching localhost, use Pages as a static preview and run the fully functional demo at `http://127.0.0.1:4173`.
-
----
-
-### 4. 1-Click GitHub Codespaces
-
-Sentinel includes a complete [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) configuration:
-
-1. Click **Code** > **Codespaces** > **Create codespace on main**.
-2. Codespaces automatically installs Python 3.11, Node.js, and dependencies via `pip install -r requirements.txt`.
-3. Ports `8787` (Engine API) and `4173` (Demo Web Client) are automatically forwarded.
-
----
-
-## 💻 Local Quickstart
-
-### Prerequisites
-- Python 3.9+
-- Google Chrome or Chromium-based browser
-- Node.js 18+ (optional, for JS validation)
-
-### 1. Start the Engine & Demo Client
-
-```bash
-# Create and activate a virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Option A: Start both services together
-bash scripts/run-demo.sh
-
-# Option B: Start services independently
 python3 -m uvicorn engine.app:app --host 127.0.0.1 --port 8787
+```
+
+Run the local static client separately if desired:
+
+```bash
 python3 -m http.server 4173 --bind 127.0.0.1 --directory demo-client
 ```
 
-Open your browser at `http://127.0.0.1:4173`.
-
----
-
-### 2. Install the Chrome Extension
-
-1. Open Chrome and navigate to `chrome://extensions`.
-2. Toggle **Developer mode** in the top right.
-3. Click **Load unpacked** and select the `sentinel/extension/` directory.
-4. Refresh `http://127.0.0.1:4173` — the top header will display **● Engine Online (127.0.0.1:8787)**.
-
----
-
-## 🧪 Testing
-
-Run the comprehensive unit test suite:
+## Tests
 
 ```bash
 PYTHONPATH=. python3 -m unittest discover -s engine/tests -v
+node --test tests/browser-engine.test.js tests/paste-firewall.test.js
+cmp shared/sentinel-engine.js extension/shared/sentinel-engine.js
 ```
 
-Validate Manifest V3 and JavaScript syntax:
+The Python generator owns `tests/fixtures/browser-engine-parity.json`. CI regenerates it and detects drift, compares complete analyses/redactions/audit exports, tests fail-closed paste behavior and caret restoration, verifies bundle identity, and validates manifest script order.
 
-```bash
-node -e 'const m = JSON.parse(require("fs").readFileSync("extension/manifest.json")); if (m.manifest_version !== 3) throw new Error();'
-node --check demo-client/app.js
-node --check extension/background.js
-node --check extension/content.js
-```
-
----
-
-## 🛡️ Key Features
-
-- **DOM Paste Firewall**: Captures clipboard paste events in the DOM capture phase, blocks propagation, analyzes payload against localhost rules, and triggers an interactive redaction modal before insertion.
-- **RFC1918 Private IPv4 Detector**: Accurately matches `10.0.0.0/8`, `172.16.0.0/12`, and `192.168.0.0/16` boundaries while ignoring public IPs, loopbacks, and non-RFC1918 ranges.
-- **Deterministic Redaction**: Multi-tiered suppression hierarchy prevents range corruption and double-masking.
-- **Configurable Policy Modes**:
-  - `Strict`: Flags all potential secrets, emails, internal IPs, and high-entropy strings.
-  - `Balanced`: Standard protection for API keys, passwords, and private infrastructure.
-  - `Permissive`: Blocks only critical secrets and database credentials.
-- **Zero-Cloud Audit Export**: Export activity logs in JSON or Markdown directly from the local in-memory audit store without persisting raw sensitive text.
-
----
-
-## 📁 Repository Structure
+## Repository layout
 
 ```text
-sentinel/
-├── .devcontainer/
-│   └── devcontainer.json        # 1-Click GitHub Codespaces configuration
-├── .github/
-│   └── workflows/
-│       ├── ci.yml               # Python 3.9-3.12 CI matrix & JS syntax check
-│       └── pages.yml            # Automated GitHub Pages static deployment
-├── demo-client/                 # Interactive web workspace & paste demo
-│   ├── index.html
-│   ├── app.js
-│   └── styles.css
-├── engine/                      # Deterministic Python detection & redaction engine
-│   ├── app.py                   # FastAPI REST API endpoints
-│   ├── domain.py                # Regex, entropy, and redaction logic
-│   └── tests/                   # 28-case standard library test suite
-│       └── test_engine.py
-├── extension/                   # Manifest V3 Chrome Extension
-│   ├── manifest.json
-│   ├── background.js            # Service worker communicating with 127.0.0.1:8787
-│   ├── content.js               # DOM paste & submit interceptor
-│   └── icons/
-├── scripts/
-│   └── run-demo.sh              # One-command local startup script
-├── .gitignore
-├── requirements.txt
-└── README.md
+engine/                       Python reference detector, redactor, audit, API
+shared/sentinel-engine.js     Browser-safe classic-script engine
+extension/shared/             Byte-identical packaged browser engine
+extension/paste-controller.js Testable fail-closed paste controller
+extension/content.js          All-sites interception and local review UI
+demo-client/                  Standalone GitHub Pages app
+tests/                        Browser parity and paste-firewall tests
 ```
 
----
+## GitHub automation
 
-## 📄 License
+- `.github/workflows/ci.yml` tests Python 3.9–3.12 and the browser/extension implementation.
+- `.github/workflows/pages.yml` publishes `demo-client/` plus the shared engine.
+- In **Settings → Pages**, choose **GitHub Actions** as the source.
+- `.devcontainer/devcontainer.json` provides Codespaces support for ports `8787` and `4173`.
 
-MIT License. See [LICENSE](LICENSE) for details.
+All included credentials and test values are synthetic.
+
+## License
+
+MIT — see [LICENSE](LICENSE).

@@ -1,0 +1,359 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "name": "safe",
+      "text": "How should I structure retries in a small Python service?",
+      "policy": "balanced",
+      "analysis": {
+        "decision": "allow",
+        "findings": []
+      },
+      "redactions": {
+        "all": {
+          "redactedText": "How should I structure retries in a small Python service?",
+          "redactedFindingIds": []
+        }
+      }
+    },
+    {
+      "name": "all-findings",
+      "text": "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE github_pat_11AA0abcdefghijklmnopqrstuv API_KEY=sk_live_example_123456 postgres://service:hunter2@10.24.3.8/prod internal 192.168.1.42 owner@example.com",
+      "policy": "balanced",
+      "analysis": {
+        "decision": "review_required",
+        "findings": [
+          {
+            "id": "finding-1",
+            "type": "aws_access_key",
+            "severity": "high",
+            "rule": "aws_access_key_id",
+            "safePreview": "AKI…",
+            "replacement": "[REDACTED_API_KEY]",
+            "range": {
+              "start": 18,
+              "end": 38
+            }
+          },
+          {
+            "id": "finding-2",
+            "type": "github_token",
+            "severity": "high",
+            "rule": "github_token_prefix",
+            "safePreview": "git…",
+            "replacement": "[REDACTED_API_KEY]",
+            "range": {
+              "start": 39,
+              "end": 77
+            }
+          },
+          {
+            "id": "finding-3",
+            "type": "api_key",
+            "severity": "high",
+            "rule": "generic_api_key_assignment",
+            "safePreview": "sk_…",
+            "replacement": "[REDACTED_API_KEY]",
+            "range": {
+              "start": 86,
+              "end": 108
+            }
+          },
+          {
+            "id": "finding-4",
+            "type": "database_url",
+            "severity": "critical",
+            "rule": "password_bearing_database_url",
+            "safePreview": "postgres://…",
+            "replacement": "[REDACTED_DATABASE_URL]",
+            "range": {
+              "start": 109,
+              "end": 150
+            }
+          },
+          {
+            "id": "finding-5",
+            "type": "internal_ip",
+            "severity": "medium",
+            "rule": "rfc1918_ipv4",
+            "safePreview": "192.168.x.x",
+            "replacement": "[REDACTED_INTERNAL_IP]",
+            "range": {
+              "start": 160,
+              "end": 172
+            }
+          },
+          {
+            "id": "finding-6",
+            "type": "email",
+            "severity": "medium",
+            "rule": "email_address",
+            "safePreview": "o…@example.com",
+            "replacement": "[REDACTED_EMAIL]",
+            "range": {
+              "start": 173,
+              "end": 190
+            }
+          }
+        ]
+      },
+      "redactions": {
+        "all": {
+          "redactedText": "AWS_ACCESS_KEY_ID=[REDACTED_API_KEY] [REDACTED_API_KEY] API_KEY=[REDACTED_API_KEY] [REDACTED_DATABASE_URL] internal [REDACTED_INTERNAL_IP] [REDACTED_EMAIL]",
+          "redactedFindingIds": [
+            "finding-1",
+            "finding-2",
+            "finding-3",
+            "finding-4",
+            "finding-5",
+            "finding-6"
+          ]
+        }
+      }
+    },
+    {
+      "name": "strict-entropy",
+      "text": "token=8sF3mQ9vL2xK7pR4nT6wY1zB5cD0hJ8u",
+      "policy": "strict",
+      "analysis": {
+        "decision": "review_required",
+        "findings": [
+          {
+            "id": "finding-1",
+            "type": "suspected_secret",
+            "severity": "high",
+            "rule": "named_context_high_entropy",
+            "safePreview": "8sF3…",
+            "replacement": "[REDACTED_SUSPECTED_SECRET]",
+            "range": {
+              "start": 6,
+              "end": 38
+            }
+          }
+        ]
+      },
+      "redactions": {
+        "all": {
+          "redactedText": "token=[REDACTED_SUSPECTED_SECRET]",
+          "redactedFindingIds": [
+            "finding-1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "balanced-entropy",
+      "text": "token=8sF3mQ9vL2xK7pR4nT6wY1zB5cD0hJ8u",
+      "policy": "balanced",
+      "analysis": {
+        "decision": "allow",
+        "findings": []
+      },
+      "redactions": {
+        "all": {
+          "redactedText": "token=8sF3mQ9vL2xK7pR4nT6wY1zB5cD0hJ8u",
+          "redactedFindingIds": []
+        }
+      }
+    },
+    {
+      "name": "password-json",
+      "text": "{\"password\": \"MyS3cret!\"}",
+      "policy": "balanced",
+      "analysis": {
+        "decision": "review_required",
+        "findings": [
+          {
+            "id": "finding-1",
+            "type": "password",
+            "severity": "critical",
+            "rule": "named_password_assignment",
+            "safePreview": "•••••••• (9 characters)",
+            "replacement": "[REDACTED_PASSWORD]",
+            "range": {
+              "start": 14,
+              "end": 23
+            }
+          }
+        ]
+      },
+      "redactions": {
+        "all": {
+          "redactedText": "{\"password\": \"[REDACTED_PASSWORD]\"}",
+          "redactedFindingIds": [
+            "finding-1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "private-boundaries",
+      "text": "10.0.0.0 172.31.255.255 192.168.255.255 8.8.8.8",
+      "policy": "balanced",
+      "analysis": {
+        "decision": "review_required",
+        "findings": [
+          {
+            "id": "finding-1",
+            "type": "internal_ip",
+            "severity": "medium",
+            "rule": "rfc1918_ipv4",
+            "safePreview": "10.x.x.x",
+            "replacement": "[REDACTED_INTERNAL_IP]",
+            "range": {
+              "start": 0,
+              "end": 8
+            }
+          },
+          {
+            "id": "finding-2",
+            "type": "internal_ip",
+            "severity": "medium",
+            "rule": "rfc1918_ipv4",
+            "safePreview": "172.31.x.x",
+            "replacement": "[REDACTED_INTERNAL_IP]",
+            "range": {
+              "start": 9,
+              "end": 23
+            }
+          },
+          {
+            "id": "finding-3",
+            "type": "internal_ip",
+            "severity": "medium",
+            "rule": "rfc1918_ipv4",
+            "safePreview": "192.168.x.x",
+            "replacement": "[REDACTED_INTERNAL_IP]",
+            "range": {
+              "start": 24,
+              "end": 39
+            }
+          }
+        ]
+      },
+      "redactions": {
+        "all": {
+          "redactedText": "[REDACTED_INTERNAL_IP] [REDACTED_INTERNAL_IP] [REDACTED_INTERNAL_IP] 8.8.8.8",
+          "redactedFindingIds": [
+            "finding-1",
+            "finding-2",
+            "finding-3"
+          ]
+        }
+      }
+    },
+    {
+      "name": "overlap",
+      "text": "API_KEY=AKIAIOSFODNN7EXAMPLE.",
+      "policy": "balanced",
+      "analysis": {
+        "decision": "review_required",
+        "findings": [
+          {
+            "id": "finding-1",
+            "type": "aws_access_key",
+            "severity": "high",
+            "rule": "aws_access_key_id",
+            "safePreview": "AKI…",
+            "replacement": "[REDACTED_API_KEY]",
+            "range": {
+              "start": 8,
+              "end": 28
+            }
+          }
+        ]
+      },
+      "redactions": {
+        "all": {
+          "redactedText": "API_KEY=[REDACTED_API_KEY].",
+          "redactedFindingIds": [
+            "finding-1"
+          ]
+        }
+      }
+    },
+    {
+      "name": "database-overlap",
+      "text": "Connect postgres://service:hunter2@10.24.3.8/prod now.",
+      "policy": "balanced",
+      "analysis": {
+        "decision": "review_required",
+        "findings": [
+          {
+            "id": "finding-1",
+            "type": "database_url",
+            "severity": "critical",
+            "rule": "password_bearing_database_url",
+            "safePreview": "postgres://…",
+            "replacement": "[REDACTED_DATABASE_URL]",
+            "range": {
+              "start": 8,
+              "end": 49
+            }
+          }
+        ]
+      },
+      "redactions": {
+        "all": {
+          "redactedText": "Connect [REDACTED_DATABASE_URL] now.",
+          "redactedFindingIds": [
+            "finding-1"
+          ]
+        }
+      }
+    }
+  ],
+  "audit": {
+    "json": {
+      "exportDate": "<timestamp>",
+      "totalEvents": 2,
+      "decisions": {
+        "block": 1,
+        "redact_send": 1
+      },
+      "findingCategories": {
+        "api_key": 2,
+        "aws_access_key": 2,
+        "database_url": 2,
+        "email": 2,
+        "github_token": 2,
+        "internal_ip": 2
+      },
+      "events": [
+        {
+          "id": "event-2",
+          "timestamp": "<timestamp>",
+          "decision": "block",
+          "policy": "strict",
+          "findingCategories": [
+            "api_key",
+            "aws_access_key",
+            "database_url",
+            "email",
+            "github_token",
+            "internal_ip"
+          ],
+          "findingCount": 6,
+          "sent": false
+        },
+        {
+          "id": "event-1",
+          "timestamp": "<timestamp>",
+          "decision": "redact_send",
+          "policy": "strict",
+          "findingCategories": [
+            "api_key",
+            "aws_access_key",
+            "database_url",
+            "email",
+            "github_token",
+            "internal_ip"
+          ],
+          "findingCount": 6,
+          "sent": true
+        }
+      ]
+    },
+    "markdown": "# Sentinel Sanitized Audit Report\n\n- **Export Date:** <timestamp>\n- **Total Events:** 2\n\n## Decision Summary\n\n- **block:** 1\n- **redact_send:** 1\n\n## Finding Categories\n\n- **api_key:** 2\n- **aws_access_key:** 2\n- **database_url:** 2\n- **email:** 2\n- **github_token:** 2\n- **internal_ip:** 2\n\n## Event Timeline\n\n| Timestamp | Decision | Policy | Categories | Sent |\n| --- | --- | --- | --- | --- |\n| <timestamp> | block | strict | api_key, aws_access_key, database_url, email, github_token, internal_ip | False |\n| <timestamp> | redact_send | strict | api_key, aws_access_key, database_url, email, github_token, internal_ip | True |"
+  }
+}

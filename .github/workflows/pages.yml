@@ -5,6 +5,7 @@ on:
     branches: [ main, master ]
     paths:
       - "demo-client/**"
+      - "shared/sentinel-engine.js"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -30,10 +31,16 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Build standalone static site
+        run: |
+          mkdir -p _site/shared
+          cp -R demo-client/. _site/
+          cp shared/sentinel-engine.js _site/shared/sentinel-engine.js
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './demo-client'
+          path: './_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

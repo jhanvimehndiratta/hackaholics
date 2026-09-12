@@ -51,29 +51,21 @@ let pending = null;
 let activity = [];
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function dispatchRequest(detail) {
-  return new Promise((resolve, reject) => {
-    const requestId = crypto.randomUUID();
-    const timeout = window.setTimeout(() => {
-      window.removeEventListener("sentinel:response", onResponse);
-      reject(new Error("Sentinel extension did not respond. Load the unpacked extension and retry."));
-    }, 1500);
-
-    function onResponse(event) {
-      if (event.detail?.requestId !== requestId) return;
-      window.clearTimeout(timeout);
-      window.removeEventListener("sentinel:response", onResponse);
-      if (event.detail.error) reject(new Error(event.detail.error));
-      else resolve(event.detail.payload);
-    }
-
-    window.addEventListener("sentinel:response", onResponse);
-    window.dispatchEvent(new CustomEvent("sentinel:request", { detail: { ...detail, requestId } }));
-  });
-}
+const browserAudit = new globalThis.SentinelEngine.AuditStore();
 
 async function engineRequest(action, payload = {}) {
-  return dispatchRequest({ action, payload });
+  const engine = globalThis.SentinelEngine;
+  if (!engine) throw new Error("The on-device browser engine failed to initialize. Nothing was sent.");
+  if (action === "health") return { status: "local", service: "sentinel-browser-engine" };
+  if (action === "analyze") return engine.analyzeText(payload.text, payload.policy);
+  if (action === "redact") return engine.redactText(payload.text, payload.findingIds, payload.policy);
+  if (action === "audit") {
+    const findings = (payload.findingTypes || []).map((type) => ({ type }));
+    return browserAudit.record(payload.decision, findings, payload.sent, payload.policy);
+  }
+  if (action === "getAudit") return { events: browserAudit.list() };
+  if (action === "exportAudit") return browserAudit.export(payload.format || "json");
+  throw new Error(`Unsupported browser-engine action: ${action}`);
 }
 
 function setPolicy(policy) {
@@ -111,9 +103,9 @@ function setEngineStatus(status, label) {
 async function checkEngine() {
   try {
     await engineRequest("health");
-    setEngineStatus("online", "Local engine connected");
+    setEngineStatus("online", "On-device browser engine");
   } catch {
-    setEngineStatus("offline", "Load extension + engine");
+    setEngineStatus("offline", "Browser engine unavailable");
   }
 }
 
@@ -302,7 +294,7 @@ async function submitPrompt() {
   } catch (error) {
     sendButton.disabled = false;
     formStatus.textContent = error.message;
-    setEngineStatus("offline", "Local engine unavailable");
+    setEngineStatus("offline", "Browser engine unavailable");
   }
 }
 

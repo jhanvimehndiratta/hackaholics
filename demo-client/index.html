@@ -30,7 +30,7 @@
           <div class="engine-state" data-engine-state="checking" id="engine-status-badge">
             <span class="engine-dot" aria-hidden="true"></span>
             <span id="engine-label">Checking engine</span>
-            <code>127.0.0.1:8787</code>
+            <code>local browser</code>
           </div>
         </div>
       </header>
@@ -67,7 +67,7 @@
             <div class="paste-sandbox-panel">
               <div class="sandbox-header">
                 <span class="sandbox-title">📋 Paste Firewall Playground</span>
-                <span class="sandbox-tip">Paste clipboard data here (Ctrl+V / Cmd+V) to test instant extension interception</span>
+                <span class="sandbox-tip">Paste here to test this standalone, on-device demo. Cross-site protection requires the extension.</span>
               </div>
               <input
                 type="text"
@@ -122,7 +122,7 @@
             <dl class="privacy-facts">
               <div><dt>Engine</dt><dd>Deterministic rules</dd></div>
               <div><dt>Shannon Entropy</dt><dd id="fact-entropy">Disabled in Balanced</dd></div>
-              <div><dt>Network</dt><dd>Localhost only</dd></div>
+              <div><dt>Network</dt><dd>No analysis requests</dd></div>
               <div><dt>Audit</dt><dd>Sanitized (No raw values)</dd></div>
             </dl>
           </section>
@@ -171,6 +171,7 @@
       </section>
     </main>
 
+    <script src="shared/sentinel-engine.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

@@ -358,5 +358,17 @@ class AuditTests(unittest.TestCase):
 
 
 
+class BrowserFixtureTests(unittest.TestCase):
+    def test_python_reference_builds_synthetic_browser_fixture(self):
+        from engine.tests.generate_browser_fixtures import build_fixture
+
+        fixture = build_fixture()
+        case_names = {case["name"] for case in fixture["cases"]}
+        self.assertTrue({"safe", "all-findings", "strict-entropy", "overlap"} <= case_names)
+        serialized = json.dumps(fixture)
+        self.assertNotIn("realSecret", serialized)
+        self.assertIn("<timestamp>", serialized)
+
+
 if __name__ == "__main__":
     unittest.main()
