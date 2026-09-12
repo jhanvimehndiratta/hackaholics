@@ -290,6 +290,8 @@ function reset() {
   pending = null;
   input.value = "";
   if (formStatus) formStatus.textContent = "";
+  // Ensure status chip goes back to the Ready-to-inspect label.
+  if (checkpointTitle) checkpointTitle.textContent = "Ready to inspect";
   setState("idle");
 }
 
