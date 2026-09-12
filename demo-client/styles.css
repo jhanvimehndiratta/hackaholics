@@ -37,19 +37,15 @@ body::before{
 
   /* Full-viewport cinematic radar image backdrop */
   background-image:
-    /* dark navy overlay / vignette above the image */
+    /* vignette + radial mood above the radar image */
     radial-gradient(1200px 900px at 50% 15%, rgba(9,13,22,0) 40%, rgba(9,13,22,.82) 82%),
-    radial-gradient(900px 420px at 50% 92%, rgba(59,130,246,.16), rgba(9,13,22,0) 60%),
     url("./radar-backdrop.png");
 
   background-repeat: no-repeat;
-  background-size: cover, cover, cover;
+  background-size: cover, cover;
 
   /* Slightly above hero center */
-  background-position:
-    center top,
-    center,
-    50% 40%;
+  background-position: center top, 50% 40%;
 
   /* Opacity so panels remain readable */
   opacity: .45;
