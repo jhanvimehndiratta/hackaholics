@@ -1,8 +1,8 @@
 # Sentinel — Zero-Cloud Local Prompt & Clipboard Privacy Firewall
 
-[![Sentinel CI](https://github.com/USERNAME/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/sentinel/actions/workflows/ci.yml)
-[![Deploy Demo to GitHub Pages](https://github.com/USERNAME/sentinel/actions/workflows/pages.yml/badge.svg)](https://github.com/USERNAME/sentinel/actions/workflows/pages.yml)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/USERNAME/sentinel)
+[![Sentinel CI](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/ci.yml/badge.svg)](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/ci.yml)
+[![Deploy Demo to GitHub Pages](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/pages.yml/badge.svg)](https://github.com/jhanvimehndiratta/hackaholics/actions/workflows/pages.yml)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/jhanvimehndiratta/hackaholics)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue.svg)](https://www.python.org/downloads/)
 [![Chrome Extension Manifest V3](https://img.shields.io/badge/extension-Manifest%20V3-brightgreen.svg)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -53,25 +53,24 @@ All detection, pattern analysis, Shannon entropy scoring, and redaction execute 
 
 ---
 
-## 🚀 Running on Your Personal GitHub
+## 🚀 GitHub Repository
 
-### 1. Push This Repository to Your GitHub
+This project is published from [`jhanvimehndiratta/hackaholics`](https://github.com/jhanvimehndiratta/hackaholics) on the `main` branch.
 
-Create a new repository on [GitHub](https://github.com/new) (e.g. `sentinel`), then run:
+To clone it:
 
 ```bash
-# Initialize git if starting fresh in the sentinel directory
-git init
-git add .
-git commit -m "feat: complete Sentinel privacy firewall with GitHub CI and Pages"
+git clone https://github.com/jhanvimehndiratta/hackaholics.git
+cd hackaholics
+```
 
-# Add your personal GitHub remote and push
-git remote add origin https://github.com/<YOUR_GITHUB_USERNAME>/sentinel.git
+To push an existing local checkout that does not yet have a remote:
+
+```bash
+git remote add origin https://github.com/jhanvimehndiratta/hackaholics.git
 git branch -M main
 git push -u origin main
 ```
-
-*(Replace `<YOUR_GITHUB_USERNAME>` with your actual GitHub username).*
 
 ---
 
@@ -89,14 +88,13 @@ Workflow file: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ### 3. Automated GitHub Pages Demo
 
-The static demo client is deployed automatically to GitHub Pages:
+The static client is published at [jhanvimehndiratta.github.io/hackaholics](https://jhanvimehndiratta.github.io/hackaholics/).
 
-1. In your GitHub repository, navigate to **Settings** > **Pages**.
-2. Under **Build and deployment** > **Source**, select **GitHub Actions**.
-3. Any push to `main` touching `demo-client/` will build and publish your interactive web client live at:
-   `https://<YOUR_GITHUB_USERNAME>.github.io/sentinel/`
+One repository setting is required: open **Settings → Pages**, then set **Source** to **GitHub Actions**. If the source remains **Deploy from a branch**, GitHub runs the legacy `pages-build-deployment` flow and may render this README instead of `demo-client/`.
 
-Workflow file: [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+A push to `main` that changes `demo-client/` or the Pages workflow deploys the static files through [`.github/workflows/pages.yml`](.github/workflows/pages.yml).
+
+> **Static hosting boundary:** GitHub Pages hosts only the HTML, CSS, and JavaScript client. It does not run the FastAPI backend. Live analysis still requires the engine on `127.0.0.1:8787` and the unpacked Chrome extension. If Chrome blocks a hosted HTTPS page from reaching localhost, use Pages as a static preview and run the fully functional demo at `http://127.0.0.1:4173`.
 
 ---
 
@@ -106,7 +104,7 @@ Sentinel includes a complete [`.devcontainer/devcontainer.json`](.devcontainer/d
 
 1. Click **Code** > **Codespaces** > **Create codespace on main**.
 2. Codespaces automatically installs Python 3.11, Node.js, and dependencies via `pip install -r requirements.txt`.
-3. Ports `8787` (Engine API) and `8000` (Demo Web Client) are automatically forwarded.
+3. Ports `8787` (Engine API) and `4173` (Demo Web Client) are automatically forwarded.
 
 ---
 
@@ -135,7 +133,7 @@ python3 -m uvicorn engine.app:app --host 127.0.0.1 --port 8787
 python3 -m http.server 4173 --bind 127.0.0.1 --directory demo-client
 ```
 
-Open your browser at `http://127.0.0.1:4173` (or `http://127.0.0.1:8000`).
+Open your browser at `http://127.0.0.1:4173`.
 
 ---
 

@@ -1,0 +1,27 @@
+{
+  "name": "Sentinel Privacy Firewall",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {}
+  },
+  "postCreateCommand": "pip install -r requirements.txt",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ]
+    }
+  },
+  "forwardPorts": [8787, 4173],
+  "portsAttributes": {
+    "8787": {
+      "label": "Sentinel Engine API",
+      "onAutoForward": "notify"
+    },
+    "4173": {
+      "label": "Demo Web Client",
+      "onAutoForward": "openBrowser"
+    }
+  }
+}
