@@ -105,6 +105,7 @@ function setEngineStatus(status, label) {
   }
 }
 
+// Placeholder for older markup versions; intentionally no-op.
 function stateLineForEngine() {
   return false;
 }
@@ -322,9 +323,10 @@ initPolicyUI();
 async function checkEngine() {
   try {
     await engineRequest("health");
-    // Use the offline panel as the only visible availability indicator.
+    setEngineStatus("online", "On-device engine");
     setState("idle");
   } catch {
+    setEngineStatus("offline", "Engine unavailable");
     showOffline();
   }
 }
