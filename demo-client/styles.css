@@ -38,8 +38,7 @@ body::before{
   /* Full-viewport cinematic radar image backdrop */
   background-image:
     /* vignette + radial mood above the radar image */
-    radial-gradient(1200px 900px at 50% 15%, rgba(9,13,22,0) 40%, rgba(9,13,22,.82) 82%),
-    url("./radar-backdrop.png");
+    radial-gradient(1200px 900px at 50% 15%, rgba(9,13,22,0) 40%, rgba(9,13,22,.82) 82%);
 
   background-repeat: no-repeat;
   background-size: cover, cover;
